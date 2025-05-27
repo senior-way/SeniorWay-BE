@@ -1,5 +1,6 @@
 package com.seniorway.seniorway.service;
 
+import com.seniorway.seniorway.dto.UserSignUpRequestsDto;
 import com.seniorway.seniorway.entity.User;
 import com.seniorway.seniorway.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -7,6 +8,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
@@ -16,6 +18,7 @@ import java.util.Collections;
 public class UserService implements UserDetailsService {
 
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
     /**
      * Spring Security 에서 로그인 시 사용자의 인증 정보를 가져오는 로직
@@ -37,5 +40,27 @@ public class UserService implements UserDetailsService {
         );
     }
 
+    /**
+     * 회원가입 요청 처리
+     * 주어진 signUp DTO를 바탕으로 이메일 중복 여부 체크
+     * 비밀번호를 암호화 하여 User Entity를 생성 후 DB 에 저장
+     * @param userSignUpRequestsDto 회원가입용 User 정보
+     * @return 저장된 User Entity
+     * @throws IllegalArgumentException 이메일이 존재할 경우 예외 발생
+     */
+    public User signUp(UserSignUpRequestsDto userSignUpRequestsDto) {
+        if (userRepository.existsByEmail(String.valueOf(userSignUpRequestsDto.getEmail()))) {
+            throw new IllegalArgumentException("Email address already in use");
+        }
 
+        // TODO: 왜 String 으로 변환 해야 하는지 check!
+        User user = User.builder()
+                .username(userSignUpRequestsDto.getUsername())
+                .email(String.valueOf(userSignUpRequestsDto.getEmail()))
+                .password(passwordEncoder.encode(userSignUpRequestsDto.getPassword()))
+                .role("ROLE_USER")
+                .build();
+
+        return userRepository.save(user);
+    }
 }
