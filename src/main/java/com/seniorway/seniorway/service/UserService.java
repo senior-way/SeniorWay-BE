@@ -1,5 +1,6 @@
 package com.seniorway.seniorway.service;
 
+import com.seniorway.seniorway.config.JwtTokenProvider;
 import com.seniorway.seniorway.dto.UserSignUpRequestsDto;
 import com.seniorway.seniorway.entity.User;
 import com.seniorway.seniorway.repository.UserRepository;
@@ -19,6 +20,7 @@ public class UserService implements UserDetailsService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JwtTokenProvider jwtTokenProvider;
 
     /**
      * Spring Security 에서 로그인 시 사용자의 인증 정보를 가져오는 로직
@@ -48,7 +50,7 @@ public class UserService implements UserDetailsService {
      * @return 저장된 User Entity
      * @throws IllegalArgumentException 이메일이 존재할 경우 예외 발생
      */
-    public User signUp(UserSignUpRequestsDto userSignUpRequestsDto) {
+    public String signUp(UserSignUpRequestsDto userSignUpRequestsDto) {
         if (userRepository.existsByEmail(String.valueOf(userSignUpRequestsDto.getEmail()))) {
             throw new IllegalArgumentException("Email address already in use");
         }
@@ -61,6 +63,7 @@ public class UserService implements UserDetailsService {
                 .role("ROLE_USER")
                 .build();
 
-        return userRepository.save(user);
+        userRepository.save(user);
+        return jwtTokenProvider
     }
 }
