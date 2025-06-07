@@ -70,10 +70,10 @@ jobs:
           ls -al
 
       - name: Give gradlew permission
-        run: chmod +x ./gradlew
+        run: chmod +x ./SeniorWay-BE/gradlew build -x test
 
       - name: Build with Gradle
-        run: ./gradlew build -x test
+        run: ./SeniorWay-BE/gradlew build -x test
 
       # docker build & push to production
       - name: Docker build & push to prod
