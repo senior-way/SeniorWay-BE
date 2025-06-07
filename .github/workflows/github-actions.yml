@@ -77,8 +77,8 @@ jobs:
 
       - name: Build with Gradle
         run: |
-          chmod +x ../gradlew
-          ../gradlew build -x test
+          chmod +x ./gradlew
+          ./gradlew build -x test
 
       # docker build & push to production
       - name: Docker build & push to prod
