@@ -64,6 +64,14 @@ jobs:
 #        shell: bash
 
       # gradle build
+      - name: Check files
+        run: |
+          pwd
+          ls -al
+
+      - name: Give gradlew permission
+        run: chmod +x ./gradlew
+
       - name: Build with Gradle
         run: ./gradlew build -x test
 
