@@ -7,6 +7,7 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.security.core.Authentication;
 import org.springframework.beans.factory.annotation.Value;
@@ -178,7 +179,35 @@ public class JwtTokenProvider {
         return new UsernamePasswordAuthenticationToken(authUser, token, authorities);
     }
 
+    /**
+     * 요청에서 JWT 토근을 추출
+     * <p>
+     *     이 메서드는 다음의 순서로 토근을 확인
+     * </p>
+     * <ol>
+     *     <li>Authorization 헤더에서 "Bearer " 접수사를 가진 토큰</li>
+     *     <li>쿠키 중 이름이 "refreshToken"인 쿠키의 값</li>
+     * </ol>
+     * @param request
+     * @return
+     */
     public String resolveToken(HttpServletRequest request) {
+        // 1. Authorization 헤더 체크
+        String bearer = request.getHeader("Authorization");
+        if (bearer != null && bearer.startsWith("Bearer ")) {
+            return bearer.substring(7);
+        }
 
+        // 2. 쿠키 체크
+        Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if ("refresh-token".equals(cookie.getName())) {
+                    return cookie.getValue();
+                }
+            }
+        }
+
+        return null;
     }
 }
