@@ -1,10 +1,7 @@
 package com.seniorway.seniorway.config;
 
 import com.seniorway.seniorway.dto.AuthUser;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.JwtException;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.Cookie;
@@ -96,7 +93,7 @@ public class JwtTokenProvider {
     public String createRefreshToken(Long userId) {
         // email을 subject, type을 추가로 식별값으로 하여 Token 발급에 필요한 Claims 생성
         Claims claims = Jwts.claims().setSubject(userId.toString());
-        claims.put("type", "refresh-token");
+        claims.put("type", "refreshToken");
 
         Date now = new Date();
         Date validity = new Date(now.getTime() + refreshExpirationMilliseconds);
@@ -129,6 +126,35 @@ public class JwtTokenProvider {
             System.out.println("Invalid or expired JWT token");
             return null;
         }
+    }
+
+    /**
+     * 주어진 Jwt Token 에서 subject(userId) 를 추출
+     * @param token
+     * @return
+     */
+    public Long getUserIdFromToken(String token) {
+        JwtParser parser = Jwts.parserBuilder()
+                .setSigningKey(key)
+                .build();
+
+        Claims claims = parser.parseClaimsJws(token).getBody();
+        return Long.parseLong(claims.getSubject());
+    }
+
+    /**
+     * JWT Token 에서 email claim을 추출
+     * @param token
+     * @return
+     */
+    public String getEmailFromToken(String token) {
+        Claims claims = Jwts.parserBuilder()
+                .setSigningKey(key)
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+
+        return claims.get("email", String.class);
     }
 
     /**
@@ -202,7 +228,7 @@ public class JwtTokenProvider {
         Cookie[] cookies = request.getCookies();
         if (cookies != null) {
             for (Cookie cookie : cookies) {
-                if ("refresh-token".equals(cookie.getName())) {
+                if ("refreshToken".equals(cookie.getName())) {
                     return cookie.getValue();
                 }
             }

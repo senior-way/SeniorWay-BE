@@ -1,6 +1,8 @@
 package com.seniorway.seniorway.service;
 
 import com.seniorway.seniorway.config.JwtTokenProvider;
+import com.seniorway.seniorway.dto.UserLoginRequestsDto;
+import com.seniorway.seniorway.dto.UserLoginResponseDTO;
 import com.seniorway.seniorway.dto.UserSignUpRequestsDto;
 import com.seniorway.seniorway.entity.User;
 import com.seniorway.seniorway.repository.UserRepository;
@@ -13,6 +15,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -63,7 +66,23 @@ public class UserService implements UserDetailsService {
                 .role("ROLE_USER")
                 .build();
 
-        userRepository.save(user);
-        return jwtTokenProvider
+        User saveUser = userRepository.save(user);
+        return jwtTokenProvider.createToken(saveUser.getId(), saveUser.getEmail(), saveUser.getRole());
+    }
+
+    public UserLoginResponseDTO login(UserLoginRequestsDto userLoginRequestsDto) {
+        User user = userRepository.findByEmail(userLoginRequestsDto.getEmail())
+                .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다."));
+
+        if(!passwordEncoder.matches(userLoginRequestsDto.getPassword(), user.getPassword())) {
+            throw new IllegalArgumentException("비밀전호가 틀립니다");
+        }
+
+        String accessToken = jwtTokenProvider.createToken(user.getId(), user.getEmail(), user.getRole());
+        return new UserLoginResponseDTO(accessToken, user.getId());
+    }
+
+    public Optional<User> getUserByEmail(String email) {
+        return userRepository.findByEmail(email);
     }
 }
