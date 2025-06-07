@@ -14,6 +14,12 @@ jobs:
   CI-CD:
     runs-on: ubuntu-latest
     steps:
+      #디버깅: 체크아웃용
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      #디버깅: 부모 디렉토리 찾기
+      - name: List parent directory
+        run: ls -al ../
 
       # JDK setting - github actions에서 사용할 JDK 설정 (프로젝트나 AWS의 java 버전과 달라도 무방)
       - name: Set up JDK 17
@@ -69,11 +75,10 @@ jobs:
           pwd
           ls -al
 
-      - name: Give gradlew permission
-        run: chmod +x ./SeniorWay-BE/gradlew build -x test
-
       - name: Build with Gradle
-        run: ./SeniorWay-BE/gradlew build -x test
+        run: |
+          chmod +x ../gradlew
+          ../gradlew build -x test
 
       # docker build & push to production
       - name: Docker build & push to prod
