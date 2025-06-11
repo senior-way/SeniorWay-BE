@@ -48,7 +48,7 @@ public class JwtTokenProvider {
     protected void init() {
         if (!secretKey.isBlank()) {
             // TODO 환경변수에서 Base64로 인코딩된 Key가 맞는지 확인할것
-            byte[] keyBytes = Base64.getDecoder().decode(secretKey);
+            byte[] keyBytes = Base64.getEncoder().encode(secretKey.getBytes());
             this.key = Keys.hmacShaKeyFor(keyBytes);
         }
     }
@@ -164,6 +164,8 @@ public class JwtTokenProvider {
      *     {@link JwtException}이나 {@link IllegalArgumentException}이 발생할 경우,
      *     유효하지 않은 토큰으로 간주하고 {@code false}를 반환합니다.
      * </p>
+     *
+     *
      * @param token
      * @return
      */
