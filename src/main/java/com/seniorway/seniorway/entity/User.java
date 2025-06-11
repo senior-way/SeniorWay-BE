@@ -26,7 +26,6 @@ public class User {
     @Column(nullable = false)
     private String password;
     
-    // 노인 or 보호자
     @Column
     private String role;
 }
