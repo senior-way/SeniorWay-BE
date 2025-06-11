@@ -222,6 +222,8 @@ public class JwtTokenProvider {
     public String resolveToken(HttpServletRequest request) {
         // 1. Authorization 헤더 체크
         String bearer = request.getHeader("Authorization");
+        System.out.println("Authorization header: " + bearer);  // 확인용 로그
+
         if (bearer != null && bearer.startsWith("Bearer ")) {
             return bearer.substring(7);
         }

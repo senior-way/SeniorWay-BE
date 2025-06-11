@@ -24,7 +24,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
         System.out.println("JwtAuthenticationFilter called!");
         String token = jwtTokenProvider.resolveToken(request);  // 1. 요청 헤더에서 토큰 추출
-
+        System.out.println("token: " + token);
         if (token != null && jwtTokenProvider.validateToken(token)) {  // 2. 토큰 유효성 검사
             System.out.println("Token is valid, extracting authentication...");
             var authentication = jwtTokenProvider.getAuthentication(token);  // 3. 인증 정보 생성

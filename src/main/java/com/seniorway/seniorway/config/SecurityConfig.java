@@ -27,11 +27,14 @@ public class SecurityConfig {
         http
                 .httpBasic(httpBasic -> httpBasic.disable()) // 기본 인증 비활성화
                 .csrf(csrf -> csrf.disable()) // CSRF 보호 비활성화
+                .headers(headers -> headers.frameOptions(frame -> frame.disable())) // iframe 허용
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // 세션 사용 안 함
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/**", "/swagger-ui/**", "/v3/**", "/slack").permitAll()
-                        .anyRequest().authenticated())
+                        //.requestMatchers("/auth/**", "/swagger-ui/**", "/v3/**", "/slack").permitAll()
+                        .requestMatchers("/h2-console/**").permitAll()
+                        //.anyRequest().authenticated())
+                        .anyRequest().permitAll())
                 .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class)
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint((request, response, authException) ->
