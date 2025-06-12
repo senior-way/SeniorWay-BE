@@ -1,10 +1,10 @@
-package com.seniorway.seniorway.controller;
+package com.seniorway.seniorway.controller.user;
 
-import com.seniorway.seniorway.config.JwtTokenProvider;
+import com.seniorway.seniorway.config.jwt.JwtTokenProvider;
 import com.seniorway.seniorway.dto.user.UserLoginRequestsDto;
-import com.seniorway.seniorway.dto.UserLoginResponseDTO;
-import com.seniorway.seniorway.dto.UserSignUpRequestsDto;
-import com.seniorway.seniorway.service.UserService;
+import com.seniorway.seniorway.dto.user.UserLoginResponseDTO;
+import com.seniorway.seniorway.dto.user.UserSignUpRequestsDto;
+import com.seniorway.seniorway.service.user.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;

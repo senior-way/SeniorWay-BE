@@ -1,11 +1,11 @@
-package com.seniorway.seniorway.service;
+package com.seniorway.seniorway.service.user;
 
-import com.seniorway.seniorway.config.JwtTokenProvider;
+import com.seniorway.seniorway.config.jwt.JwtTokenProvider;
 import com.seniorway.seniorway.dto.user.UserLoginRequestsDto;
-import com.seniorway.seniorway.dto.UserLoginResponseDTO;
-import com.seniorway.seniorway.dto.UserSignUpRequestsDto;
+import com.seniorway.seniorway.dto.user.UserLoginResponseDTO;
+import com.seniorway.seniorway.dto.user.UserSignUpRequestsDto;
 import com.seniorway.seniorway.entity.User;
-import com.seniorway.seniorway.repository.UserRepository;
+import com.seniorway.seniorway.repository.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;

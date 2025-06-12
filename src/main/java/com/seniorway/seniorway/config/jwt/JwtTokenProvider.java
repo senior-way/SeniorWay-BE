@@ -1,4 +1,4 @@
-package com.seniorway.seniorway.config;
+package com.seniorway.seniorway.config.jwt;
 
 import com.seniorway.seniorway.dto.user.AuthUser;
 import io.jsonwebtoken.*;

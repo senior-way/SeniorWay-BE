@@ -1,4 +1,4 @@
-package com.seniorway.seniorway.repository;
+package com.seniorway.seniorway.repository.user;
 
 import com.seniorway.seniorway.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;

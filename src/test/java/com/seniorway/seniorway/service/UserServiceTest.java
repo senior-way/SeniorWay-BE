@@ -1,11 +1,12 @@
 package com.seniorway.seniorway.service;
 
-import com.seniorway.seniorway.config.JwtTokenProvider;
+import com.seniorway.seniorway.config.jwt.JwtTokenProvider;
 import com.seniorway.seniorway.dto.user.UserLoginRequestsDto;
-import com.seniorway.seniorway.dto.UserLoginResponseDTO;
-import com.seniorway.seniorway.dto.UserSignUpRequestsDto;
+import com.seniorway.seniorway.dto.user.UserLoginResponseDTO;
+import com.seniorway.seniorway.dto.user.UserSignUpRequestsDto;
 import com.seniorway.seniorway.entity.User;
-import com.seniorway.seniorway.repository.UserRepository;
+import com.seniorway.seniorway.repository.user.UserRepository;
+import com.seniorway.seniorway.service.user.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;

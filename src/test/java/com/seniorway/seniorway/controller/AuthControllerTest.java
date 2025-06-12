@@ -2,9 +2,9 @@ package com.seniorway.seniorway.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.seniorway.seniorway.dto.user.UserLoginRequestsDto;
-import com.seniorway.seniorway.dto.UserSignUpRequestsDto;
+import com.seniorway.seniorway.dto.user.UserSignUpRequestsDto;
 import com.seniorway.seniorway.entity.User;
-import com.seniorway.seniorway.repository.UserRepository;
+import com.seniorway.seniorway.repository.user.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
