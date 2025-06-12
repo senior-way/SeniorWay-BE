@@ -1,7 +1,7 @@
 package com.seniorway.seniorway.service;
 
 import com.seniorway.seniorway.config.JwtTokenProvider;
-import com.seniorway.seniorway.dto.UserLoginRequestsDto;
+import com.seniorway.seniorway.dto.user.UserLoginRequestsDto;
 import com.seniorway.seniorway.dto.UserLoginResponseDTO;
 import com.seniorway.seniorway.dto.UserSignUpRequestsDto;
 import com.seniorway.seniorway.entity.User;
@@ -46,6 +46,18 @@ public class UserService implements UserDetailsService {
     }
 
     /**
+     * 주어진 이메일이 DB 에 이미 존재하는지 여부를 확인
+     * @param email
+     * @return
+     */
+    public boolean existsByEmail(String email) {
+        if (email == null || email.isBlank()) {
+            return false;
+        }
+        return userRepository.existsByEmail(email);
+    }
+
+    /**
      * 회원가입 요청 처리
      * 주어진 signUp DTO를 바탕으로 이메일 중복 여부 체크
      * 비밀번호를 암호화 하여 User Entity를 생성 후 DB 에 저장
@@ -54,33 +66,51 @@ public class UserService implements UserDetailsService {
      * @throws IllegalArgumentException 이메일이 존재할 경우 예외 발생
      */
     public String signUp(UserSignUpRequestsDto userSignUpRequestsDto) {
-        if (userRepository.existsByEmail(String.valueOf(userSignUpRequestsDto.getEmail()))) {
+        String email = userSignUpRequestsDto.getEmail().toLowerCase(); // 소문자 통일
+        
+        if (userRepository.existsByEmail(email)) {
             throw new IllegalArgumentException("Email address already in use");
         }
 
-        // TODO: 왜 String 으로 변환 해야 하는지 check!
         User user = User.builder()
                 .username(userSignUpRequestsDto.getUsername())
-                .email(String.valueOf(userSignUpRequestsDto.getEmail()))
+                .email(email) // 소문자로 변환된 email을 저장
                 .password(passwordEncoder.encode(userSignUpRequestsDto.getPassword()))
-                .role("ROLE_USER")
+                .role("USER")
                 .build();
 
-        User saveUser = userRepository.save(user);
-        return jwtTokenProvider.createToken(saveUser.getId(), saveUser.getEmail(), saveUser.getRole());
+        User savedUser = userRepository.save(user);
+        return jwtTokenProvider.createToken(savedUser.getId(), savedUser.getEmail(), savedUser.getRole());
     }
 
+    /**
+     * 로그인 요청을 처리하는 메서드
+     *
+     * <p>
+     *     전달받은 이메일과 비밀번호를 기반으로 사용자를 인증하고,
+     *     유효한 경우 JWT AccessToken 과 사용자 ID를 반환
+     *     이메일은 모두 소문자로 변환되어 조회됨
+     * </p>
+     *
+     * @param userLoginRequestsDto 로그인 요청 DTO (이메일, 비밀번호 포함)
+     * @return 인증에 성공한 사용자의 AccessToken과 사용자 ID를 담은 DTO
+     * @throws UsernameNotFoundException 사용자를 찾을 수 없는 경우
+     * @throws IllegalArgumentException 비밀번호가 틀린 경우
+     */
     public UserLoginResponseDTO login(UserLoginRequestsDto userLoginRequestsDto) {
-        User user = userRepository.findByEmail(userLoginRequestsDto.getEmail())
+        String email = userLoginRequestsDto.getEmail().toLowerCase(); // 소문자 통일
+
+        User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다."));
 
-        if(!passwordEncoder.matches(userLoginRequestsDto.getPassword(), user.getPassword())) {
-            throw new IllegalArgumentException("비밀전호가 틀립니다");
+        if (!passwordEncoder.matches(userLoginRequestsDto.getPassword(), user.getPassword())) {
+            throw new IllegalArgumentException("비밀번호가 틀립니다");
         }
 
         String accessToken = jwtTokenProvider.createToken(user.getId(), user.getEmail(), user.getRole());
         return new UserLoginResponseDTO(accessToken, user.getId());
     }
+
 
     public Optional<User> getUserByEmail(String email) {
         return userRepository.findByEmail(email);

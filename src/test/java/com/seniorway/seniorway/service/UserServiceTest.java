@@ -1,7 +1,7 @@
 package com.seniorway.seniorway.service;
 
 import com.seniorway.seniorway.config.JwtTokenProvider;
-import com.seniorway.seniorway.dto.UserLoginRequestsDto;
+import com.seniorway.seniorway.dto.user.UserLoginRequestsDto;
 import com.seniorway.seniorway.dto.UserLoginResponseDTO;
 import com.seniorway.seniorway.dto.UserSignUpRequestsDto;
 import com.seniorway.seniorway.entity.User;

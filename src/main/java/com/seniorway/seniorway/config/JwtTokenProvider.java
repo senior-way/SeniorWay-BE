@@ -1,6 +1,6 @@
 package com.seniorway.seniorway.config;
 
-import com.seniorway.seniorway.dto.AuthUser;
+import com.seniorway.seniorway.dto.user.AuthUser;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;

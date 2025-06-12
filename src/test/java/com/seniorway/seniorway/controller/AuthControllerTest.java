@@ -1,7 +1,7 @@
 package com.seniorway.seniorway.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.seniorway.seniorway.dto.UserLoginRequestsDto;
+import com.seniorway.seniorway.dto.user.UserLoginRequestsDto;
 import com.seniorway.seniorway.dto.UserSignUpRequestsDto;
 import com.seniorway.seniorway.entity.User;
 import com.seniorway.seniorway.repository.UserRepository;

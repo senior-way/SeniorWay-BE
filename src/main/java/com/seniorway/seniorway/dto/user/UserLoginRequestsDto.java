@@ -1,4 +1,4 @@
-package com.seniorway.seniorway.dto;
+package com.seniorway.seniorway.dto.user;
 
 import lombok.Getter;
 import lombok.Setter;
