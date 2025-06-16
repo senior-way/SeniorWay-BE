@@ -1,6 +1,8 @@
 spring:
   application:
     name: seniorway
+  config:
+    import: optional:application-secret-API.properties
 
   datasource:
     url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1
@@ -19,10 +21,14 @@ spring:
       enabled: true
       path: /h2-console
 
+
 server:
   port: 8080
   address: 0.0.0.0
 
+api:
+  green-tour:
+    service-key: ${green-tour-decoding-key}                                                                                                                                      on-secret-API.properties
 
 jwt:
   secret: 123456789abcdefghijklmnopqrstuvwxyz #${JWT_CODE}
