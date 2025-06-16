@@ -3,7 +3,6 @@ package com.seniorway.seniorway.client;
 import com.seniorway.seniorway.config.TourGuideGreenTour.TourGuideGreenTourApiProperties;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
@@ -12,6 +11,7 @@ import java.net.URI;
 public class TourGuideGreenTourApiClient {
     private final WebClient webClient;
     private final TourGuideGreenTourApiProperties properties;
+    private static final String BASE_URL = "https://apis.data.go.kr/B551011/GreenTourService1";
 
     public TourGuideGreenTourApiClient(WebClient webClient, TourGuideGreenTourApiProperties properties) {
         this.webClient = webClient;
@@ -20,18 +20,27 @@ public class TourGuideGreenTourApiClient {
 
     public String fetchGreenTourData(String url) {
         System.out.println("serviceKey: " + properties.getServiceKey());
+
+        String baseUrl = "https://apis.data.go.kr/B551011/GreenTourService1";
+
+        URI uri = UriComponentsBuilder.fromUriString(baseUrl)
+                .pathSegment(url)
+                .queryParam("MobileOS", "ETC")
+                .queryParam("MobileApp", "SeniorWayApp")
+                .queryParam("_type", "json")
+                .queryParam("numOfRows", 10)
+                .queryParam("pageNo", 1)
+                .queryParam("serviceKey", properties.getServiceKey())
+                .build(true) // 자동 인코딩
+                .toUri();
+
+        System.out.println("Built URI: " + uri);
+
         return webClient.get()
-                .uri(uriBuilder -> uriBuilder
-                        .pathSegment(url)
-                        .queryParam("serviceKey", properties.getServiceKey())
-                        .queryParam("MobileOS", "ETC") // 요구되는 기본 파라미터
-                        .queryParam("MobileApp", "SeniorWayApp")
-                        .queryParam("_type", "json") // json 형식 요청
-                        .queryParam("numOfRows", 10)
-                        .queryParam("pageNo", 1)
-                        .build())
+                .uri(uri)
                 .retrieve()
                 .bodyToMono(String.class)
                 .block();
     }
+
 }

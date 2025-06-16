@@ -28,7 +28,7 @@ server:
 
 api:
   green-tour:
-    service-key: ${green-tour-decoding-key}                                                                                                                                      on-secret-API.properties
+    service-key: ${green-tour-decoding-key}
 
 jwt:
   secret: 123456789abcdefghijklmnopqrstuvwxyz #${JWT_CODE}
