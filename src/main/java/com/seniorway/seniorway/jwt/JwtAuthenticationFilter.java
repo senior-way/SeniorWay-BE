@@ -1,4 +1,4 @@
-package com.seniorway.seniorway.config.jwt;
+package com.seniorway.seniorway.jwt;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

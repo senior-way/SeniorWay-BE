@@ -1,9 +1,9 @@
 package com.seniorway.seniorway.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.seniorway.seniorway.dto.user.UserLoginRequestsDto;
-import com.seniorway.seniorway.dto.user.UserSignUpRequestsDto;
-import com.seniorway.seniorway.entity.User;
+import com.seniorway.seniorway.dto.auth.UserLoginRequestsDto;
+import com.seniorway.seniorway.dto.auth.UserSignUpRequestsDto;
+import com.seniorway.seniorway.entity.user.User;
 import com.seniorway.seniorway.repository.user.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

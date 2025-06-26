@@ -1,10 +1,10 @@
-package com.seniorway.seniorway.service.user;
+package com.seniorway.seniorway.service.auth;
 
-import com.seniorway.seniorway.config.jwt.JwtTokenProvider;
-import com.seniorway.seniorway.dto.user.UserLoginRequestsDto;
-import com.seniorway.seniorway.dto.user.UserLoginResponseDTO;
-import com.seniorway.seniorway.dto.user.UserSignUpRequestsDto;
-import com.seniorway.seniorway.entity.User;
+import com.seniorway.seniorway.jwt.JwtTokenProvider;
+import com.seniorway.seniorway.dto.auth.UserLoginRequestsDto;
+import com.seniorway.seniorway.dto.auth.UserLoginResponseDTO;
+import com.seniorway.seniorway.dto.auth.UserSignUpRequestsDto;
+import com.seniorway.seniorway.entity.user.User;
 import com.seniorway.seniorway.repository.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -19,7 +19,7 @@ import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
-public class UserService implements UserDetailsService {
+public class AuthService implements UserDetailsService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;

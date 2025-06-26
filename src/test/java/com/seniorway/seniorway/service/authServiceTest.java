@@ -1,12 +1,12 @@
 package com.seniorway.seniorway.service;
 
-import com.seniorway.seniorway.config.jwt.JwtTokenProvider;
-import com.seniorway.seniorway.dto.user.UserLoginRequestsDto;
-import com.seniorway.seniorway.dto.user.UserLoginResponseDTO;
-import com.seniorway.seniorway.dto.user.UserSignUpRequestsDto;
-import com.seniorway.seniorway.entity.User;
+import com.seniorway.seniorway.jwt.JwtTokenProvider;
+import com.seniorway.seniorway.dto.auth.UserLoginRequestsDto;
+import com.seniorway.seniorway.dto.auth.UserLoginResponseDTO;
+import com.seniorway.seniorway.dto.auth.UserSignUpRequestsDto;
+import com.seniorway.seniorway.entity.user.User;
 import com.seniorway.seniorway.repository.user.UserRepository;
-import com.seniorway.seniorway.service.user.UserService;
+import com.seniorway.seniorway.service.auth.AuthService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -19,10 +19,10 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-class UserServiceTest {
+class authServiceTest {
 
     @InjectMocks
-    private UserService userService;
+    private AuthService authService;
 
     @Mock
     private UserRepository userRepository;
@@ -58,7 +58,7 @@ class UserServiceTest {
         request.setEmail("test@email.com");
 
         // when
-        UserLoginResponseDTO result = userService.login(request);
+        UserLoginResponseDTO result = authService.login(request);
 
         // then
         assertEquals("accessToken", result.getToken());
@@ -89,7 +89,7 @@ class UserServiceTest {
         when(jwtTokenProvider.createToken(2L, "test@email.com", "ROLE_USER")).thenReturn("signupToken");
 
         // when
-        String token = userService.signUp(dto);
+        String token = authService.signUp(dto);
 
         // then
         assertEquals("signupToken", token);

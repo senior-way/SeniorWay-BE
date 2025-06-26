@@ -1,4 +1,4 @@
-package com.seniorway.seniorway.entity;
+package com.seniorway.seniorway.entity.user;
 
 
 import jakarta.persistence.*;

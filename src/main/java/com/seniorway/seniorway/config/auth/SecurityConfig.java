@@ -1,5 +1,7 @@
-package com.seniorway.seniorway.config.jwt;
+package com.seniorway.seniorway.config.auth;
 
+import com.seniorway.seniorway.jwt.JwtAuthenticationFilter;
+import com.seniorway.seniorway.jwt.JwtTokenProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;

@@ -1,4 +1,4 @@
-package com.seniorway.seniorway.dto.user;
+package com.seniorway.seniorway.dto.auth;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

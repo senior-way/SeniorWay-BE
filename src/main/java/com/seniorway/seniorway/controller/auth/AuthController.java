@@ -1,10 +1,10 @@
-package com.seniorway.seniorway.controller.user;
+package com.seniorway.seniorway.controller.auth;
 
-import com.seniorway.seniorway.config.jwt.JwtTokenProvider;
-import com.seniorway.seniorway.dto.user.UserLoginRequestsDto;
-import com.seniorway.seniorway.dto.user.UserLoginResponseDTO;
-import com.seniorway.seniorway.dto.user.UserSignUpRequestsDto;
-import com.seniorway.seniorway.service.user.UserService;
+import com.seniorway.seniorway.jwt.JwtTokenProvider;
+import com.seniorway.seniorway.dto.auth.UserLoginRequestsDto;
+import com.seniorway.seniorway.dto.auth.UserLoginResponseDTO;
+import com.seniorway.seniorway.dto.auth.UserSignUpRequestsDto;
+import com.seniorway.seniorway.service.auth.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -22,12 +22,12 @@ import java.util.Map;
 @RequestMapping("/auth")
 @RequiredArgsConstructor
 public class AuthController {
-    private final UserService userService;
+    private final AuthService authService;
     private final JwtTokenProvider jwtTokenProvider;
 
     @PostMapping("/login")
     public ResponseEntity<String> login(@RequestBody @Valid UserLoginRequestsDto userLoginRequest) {
-        UserLoginResponseDTO userLoginResponseDTO = userService.login(userLoginRequest);
+        UserLoginResponseDTO userLoginResponseDTO = authService.login(userLoginRequest);
         String refreshToken = jwtTokenProvider.createRefreshToken(userLoginResponseDTO.getUserId());
 
         ResponseCookie refreshTokenCookie = ResponseCookie
@@ -46,7 +46,7 @@ public class AuthController {
 
     @PostMapping("/signup")
     public ResponseEntity<String> signup(@RequestBody @Valid UserSignUpRequestsDto userSignUpRequest) {
-        userService.signUp(userSignUpRequest);
+        authService.signUp(userSignUpRequest);
         return ResponseEntity.ok("Signup successful");
     }
 
@@ -89,7 +89,7 @@ public class AuthController {
 
     @GetMapping("/check-email")
     public ResponseEntity<Boolean> checkEmail(@RequestParam String email) {
-        boolean exists = userService.existsByEmail(email.toLowerCase());
+        boolean exists = authService.existsByEmail(email.toLowerCase());
         return ResponseEntity.ok(exists);
     }
 }
