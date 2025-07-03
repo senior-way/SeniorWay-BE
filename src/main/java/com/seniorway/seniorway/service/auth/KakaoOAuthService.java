@@ -2,8 +2,9 @@ package com.seniorway.seniorway.service.auth;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.seniorway.seniorway.dto.auth.KakaoUserInfo;
+import com.seniorway.seniorway.dto.oauth.KakaoUserInfo;
 import com.seniorway.seniorway.dto.auth.TokenResponse;
+import com.seniorway.seniorway.entity.user.Role;
 import com.seniorway.seniorway.entity.user.User;
 import com.seniorway.seniorway.jwt.JwtTokenProvider;
 import com.seniorway.seniorway.repository.user.UserRepository;
@@ -72,7 +73,7 @@ public class KakaoOAuthService {
                 .kakaoId(kakaoUser.getKakaoId())
                 .email(kakaoUser.getEmail())
                 .username("kakao_" + kakaoUser.getNickname())
-                .role("USER")
+                .role(Role.USER)
                 .password(passwordEncoder.encode(UUID.randomUUID().toString()))
                 .build();
 

@@ -1,6 +1,7 @@
 package com.seniorway.seniorway.jwt;
 
 import com.seniorway.seniorway.dto.auth.AuthUser;
+import com.seniorway.seniorway.entity.user.Role;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
@@ -64,7 +65,7 @@ public class JwtTokenProvider {
      * @param role user role
      * @return 생성된 JWT Token 문자열
      */
-    public String createToken(Long userId, String email, String role) {
+    public String createToken(Long userId, String email, Role role) {
         // email 을 subject, role을 추가로 식별값으로 하여 Token 발급에 필요한 Claims 생성
         Claims claims = Jwts.claims().setSubject(userId.toString());
         claims.put("email", email);

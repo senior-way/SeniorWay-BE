@@ -29,7 +29,7 @@ spring:
           kakao:
             client-id: ${kakao.client-id}
             client-secret: ${kakao.client-secret}
-            redirect-uri: http://localhost:8080/login/oauth2/kakao
+            redirect-uri: http://localhost:5173/login/callback
             authorization-grant-type: authorization_code
             client-authentication-method: post
             client-name: Kakao
@@ -53,3 +53,10 @@ jwt:
   secret: 123456789abcdefghijklmnopqrstuvwxyz #${JWT_CODE}
   expiration: 86400000  # 24시간
   refreshExpiration: 604800000  # 7일
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operationsSorter: method

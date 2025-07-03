@@ -1,5 +1,6 @@
 package com.seniorway.seniorway.controller.auth;
 
+import com.seniorway.seniorway.entity.user.Role;
 import com.seniorway.seniorway.jwt.JwtTokenProvider;
 import com.seniorway.seniorway.dto.auth.UserLoginRequestsDto;
 import com.seniorway.seniorway.dto.auth.UserLoginResponseDTO;
@@ -57,7 +58,7 @@ public class AuthController {
         if (refreshToken != null && jwtTokenProvider.validateToken(refreshToken)) {
             Long userId = jwtTokenProvider.getUserIdFromToken(refreshToken);
             String email = jwtTokenProvider.getEmailFromToken(refreshToken);
-            String role = "USER";
+            Role role = Role.USER;
             String newAccessToken = jwtTokenProvider.createToken(userId, email, role);
             return ResponseEntity.ok(newAccessToken);
         } else {

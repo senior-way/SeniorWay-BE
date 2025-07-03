@@ -34,5 +34,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         chain.doFilter(request, response);
     }
+
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
+        String path = request.getRequestURI();
+        // 로그인, 회원가입, 카카오 인증 등 토큰 없이 접근해야 하는 경로
+        return path.startsWith("/api/auth/kakao") || path.startsWith("/api/auth/login");
+    }
+
 }
 

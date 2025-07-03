@@ -1,5 +1,6 @@
 package com.seniorway.seniorway.service;
 
+import com.seniorway.seniorway.entity.user.Role;
 import com.seniorway.seniorway.jwt.JwtTokenProvider;
 import com.seniorway.seniorway.dto.auth.UserLoginRequestsDto;
 import com.seniorway.seniorway.dto.auth.UserLoginResponseDTO;
@@ -44,13 +45,13 @@ class authServiceTest {
         User user = User.builder()
                 .email("test@email.com")
                 .password("encoded")
-                .role("ROLE_USER")
+                .role(Role.USER)
                 .id(1L)
                 .build();
 
         when(userRepository.findByEmail("test@email.com")).thenReturn(Optional.of(user));
         when(passwordEncoder.matches("password1", "encoded")).thenReturn(true);
-        when(jwtTokenProvider.createToken(1L, "test@email.com", "ROLE_USER")).thenReturn("accessToken");
+        when(jwtTokenProvider.createToken(1L, "test@email.com", Role.USER)).thenReturn("accessToken");
 
         UserLoginRequestsDto request = new UserLoginRequestsDto();
         request.setUsername("user1");
@@ -81,12 +82,12 @@ class authServiceTest {
                 .username("user1")
                 .email("test@email.com")
                 .password("encodedPass")
-                .role("ROLE_USER")
+                .role(Role.USER)
                 .id(2L)
                 .build();
 
         when(userRepository.save(any(User.class))).thenReturn(savedUser);
-        when(jwtTokenProvider.createToken(2L, "test@email.com", "ROLE_USER")).thenReturn("signupToken");
+        when(jwtTokenProvider.createToken(2L, "test@email.com", Role.USER)).thenReturn("signupToken");
 
         // when
         String token = authService.signUp(dto);

@@ -1,5 +1,6 @@
 package com.seniorway.seniorway.service.auth;
 
+import com.seniorway.seniorway.entity.user.Role;
 import com.seniorway.seniorway.jwt.JwtTokenProvider;
 import com.seniorway.seniorway.dto.auth.UserLoginRequestsDto;
 import com.seniorway.seniorway.dto.auth.UserLoginResponseDTO;
@@ -41,7 +42,7 @@ public class AuthService implements UserDetailsService {
         return new org.springframework.security.core.userdetails.User(
                 user.getUsername(),
                 user.getPassword(),
-                Collections.singleton(new SimpleGrantedAuthority(user.getRole()))
+                Collections.singleton(new SimpleGrantedAuthority(user.getRole().getKey()))
         );
     }
 
@@ -76,7 +77,7 @@ public class AuthService implements UserDetailsService {
                 .username(userSignUpRequestsDto.getUsername())
                 .email(email) // 소문자로 변환된 email을 저장
                 .password(passwordEncoder.encode(userSignUpRequestsDto.getPassword()))
-                .role("USER")
+                .role(Role.USER)
                 .build();
 
         User savedUser = userRepository.save(user);
