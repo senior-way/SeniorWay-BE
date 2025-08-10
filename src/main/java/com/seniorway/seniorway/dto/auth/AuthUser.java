@@ -1,13 +1,15 @@
 package com.seniorway.seniorway.dto.auth;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.Setter;
+import com.seniorway.seniorway.entity.user.Role;
+import lombok.*;
 
-@AllArgsConstructor
 @Getter
 @Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class AuthUser {
-    private Long id;
-    private String role;
+    private Long userId;
+    private String email;
+    private Role role;
 }
