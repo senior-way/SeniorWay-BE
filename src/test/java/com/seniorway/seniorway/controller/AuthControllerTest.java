@@ -3,6 +3,7 @@ package com.seniorway.seniorway.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.seniorway.seniorway.dto.auth.UserLoginRequestsDTO;
 import com.seniorway.seniorway.dto.auth.UserSignUpRequestsDTO;
+import com.seniorway.seniorway.entity.user.Role;
 import com.seniorway.seniorway.entity.user.User;
 import com.seniorway.seniorway.repository.user.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -66,7 +67,7 @@ class AuthControllerTest {
                 .username("loginuser")
                 .email("login@example.com")
                 .password("password123")
-                .role("ROLE_USER")
+                .role(Role.USER)
                 .build();
         userRepository.save(user);
 
