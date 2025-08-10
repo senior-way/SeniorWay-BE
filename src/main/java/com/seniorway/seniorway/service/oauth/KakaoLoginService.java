@@ -2,6 +2,7 @@ package com.seniorway.seniorway.service.oauth;
 
 import com.seniorway.seniorway.dto.auth.TokenResponseDTO;
 import com.seniorway.seniorway.dto.oauth.KakaoTokenResponse;
+import com.seniorway.seniorway.dto.oauth.KakaoUserInfoConverter;
 import com.seniorway.seniorway.dto.oauth.KakaoUserInfoResponse;
 import com.seniorway.seniorway.entity.user.User;
 import com.seniorway.seniorway.jwt.JwtTokenProvider;
@@ -93,8 +94,10 @@ public class KakaoLoginService {
 
     private User saveOrUpdateUser(KakaoUserInfoResponse kakaoUserInfoResponse) {
         User user = userRepository.findByKakaoId(kakaoUserInfoResponse.getId())
-                .map(entity -> entity.update(kakaoUserInfoResponse.getProperties().getNickname(), kakaoUserInfoResponse.getKakaoAccount().getProfile().getProfileImageUrl()))
-                .orElseGet(kakaoUserInfoResponse::toEntity);
+                .map(entity -> entity.update(
+                        kakaoUserInfoResponse.getProperties().getNickname(),
+                        kakaoUserInfoResponse.getKakaoAccount().getProfile().getProfileImageUrl()))
+                .orElseGet(() -> KakaoUserInfoConverter.toEntity(kakaoUserInfoResponse));
 
         return userRepository.save(user);
     }
