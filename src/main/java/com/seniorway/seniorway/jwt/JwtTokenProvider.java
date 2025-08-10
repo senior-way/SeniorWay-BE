@@ -1,6 +1,6 @@
 package com.seniorway.seniorway.jwt;
 
-import com.seniorway.seniorway.dto.auth.AuthUser;
+import com.seniorway.seniorway.dto.auth.AuthUserDTO;
 import com.seniorway.seniorway.entity.user.Role;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
@@ -186,7 +186,7 @@ public class JwtTokenProvider {
      * JWT 토큰에서 사용자 인증 정보를 생성하여 반환합니다.
      * <p>
      * 토큰을 파싱하여 userId와 role 정보를 추출하고,
-     * 이를 바탕으로 {@link AuthUser} 객체를 생성합니다.
+     * 이를 바탕으로 {@link AuthUserDTO} 객체를 생성합니다.
      * 그리고 권한 목록(List<SimpleGrantedAuthority>)을 만들어 {@link UsernamePasswordAuthenticationToken}을 반환합니다.
      * </p>
      *
@@ -206,12 +206,12 @@ public class JwtTokenProvider {
         List<SimpleGrantedAuthority> authorities = new ArrayList<>();
         authorities.add(new SimpleGrantedAuthority("ROLE_" + roleEnum.getKey()));
 
-        AuthUser authUser = AuthUser.builder()
+        AuthUserDTO authUserDTO = AuthUserDTO.builder()
                 .userId(userId)
                 .email(email)
                 .role(roleEnum)
                 .build();
-        return new UsernamePasswordAuthenticationToken(authUser, token, authorities);
+        return new UsernamePasswordAuthenticationToken(authUserDTO, token, authorities);
     }
 
     /**
