@@ -2,7 +2,7 @@ package com.seniorway.seniorway.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.seniorway.seniorway.dto.auth.UserLoginRequestsDTO;
-import com.seniorway.seniorway.dto.auth.UserSignUpRequestsDto;
+import com.seniorway.seniorway.dto.auth.UserSignUpRequestsDTO;
 import com.seniorway.seniorway.entity.user.User;
 import com.seniorway.seniorway.repository.user.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -37,7 +37,7 @@ class AuthControllerTest {
     @Test
     void signupSuccess() {
         // given
-        UserSignUpRequestsDto signUpDto = new UserSignUpRequestsDto();
+        UserSignUpRequestsDTO signUpDto = new UserSignUpRequestsDTO();
         signUpDto.setUsername("testuser");
         signUpDto.setPassword("password123");
         signUpDto.setEmail("test@example.com");

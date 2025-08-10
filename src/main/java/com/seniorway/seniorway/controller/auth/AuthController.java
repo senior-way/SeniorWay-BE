@@ -4,7 +4,7 @@ import com.seniorway.seniorway.entity.user.Role;
 import com.seniorway.seniorway.jwt.JwtTokenProvider;
 import com.seniorway.seniorway.dto.auth.UserLoginRequestsDTO;
 import com.seniorway.seniorway.dto.auth.UserLoginResponseDTO;
-import com.seniorway.seniorway.dto.auth.UserSignUpRequestsDto;
+import com.seniorway.seniorway.dto.auth.UserSignUpRequestsDTO;
 import com.seniorway.seniorway.service.auth.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -46,7 +46,7 @@ public class AuthController {
     }
 
     @PostMapping("/signup")
-    public ResponseEntity<String> signup(@RequestBody @Valid UserSignUpRequestsDto userSignUpRequest) {
+    public ResponseEntity<String> signup(@RequestBody @Valid UserSignUpRequestsDTO userSignUpRequest) {
         authService.signUp(userSignUpRequest);
         return ResponseEntity.ok("Signup successful");
     }

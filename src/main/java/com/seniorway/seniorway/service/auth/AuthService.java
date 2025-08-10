@@ -4,7 +4,7 @@ import com.seniorway.seniorway.entity.user.Role;
 import com.seniorway.seniorway.jwt.JwtTokenProvider;
 import com.seniorway.seniorway.dto.auth.UserLoginRequestsDTO;
 import com.seniorway.seniorway.dto.auth.UserLoginResponseDTO;
-import com.seniorway.seniorway.dto.auth.UserSignUpRequestsDto;
+import com.seniorway.seniorway.dto.auth.UserSignUpRequestsDTO;
 import com.seniorway.seniorway.entity.user.User;
 import com.seniorway.seniorway.repository.user.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -66,7 +66,7 @@ public class AuthService implements UserDetailsService {
      * @return 저장된 User Entity
      * @throws IllegalArgumentException 이메일이 존재할 경우 예외 발생
      */
-    public String signUp(UserSignUpRequestsDto userSignUpRequestsDto) {
+    public String signUp(UserSignUpRequestsDTO userSignUpRequestsDto) {
         String email = userSignUpRequestsDto.getEmail().toLowerCase(); // 소문자 통일
         
         if (userRepository.existsByEmail(email)) {

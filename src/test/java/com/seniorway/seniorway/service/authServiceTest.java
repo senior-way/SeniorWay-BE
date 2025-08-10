@@ -4,7 +4,7 @@ import com.seniorway.seniorway.entity.user.Role;
 import com.seniorway.seniorway.jwt.JwtTokenProvider;
 import com.seniorway.seniorway.dto.auth.UserLoginRequestsDTO;
 import com.seniorway.seniorway.dto.auth.UserLoginResponseDTO;
-import com.seniorway.seniorway.dto.auth.UserSignUpRequestsDto;
+import com.seniorway.seniorway.dto.auth.UserSignUpRequestsDTO;
 import com.seniorway.seniorway.entity.user.User;
 import com.seniorway.seniorway.repository.user.UserRepository;
 import com.seniorway.seniorway.service.auth.AuthService;
@@ -69,7 +69,7 @@ class authServiceTest {
     @Test
     void signupSuccess() throws Exception {
         // given
-        UserSignUpRequestsDto dto = new UserSignUpRequestsDto();
+        UserSignUpRequestsDTO dto = new UserSignUpRequestsDTO();
         dto.setUsername("user1");
         dto.setPassword("password1");
         dto.setEmail("test@email.com");
