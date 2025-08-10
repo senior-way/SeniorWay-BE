@@ -1,7 +1,7 @@
 package com.seniorway.seniorway.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.seniorway.seniorway.dto.auth.UserLoginRequestsDto;
+import com.seniorway.seniorway.dto.auth.UserLoginRequestsDTO;
 import com.seniorway.seniorway.dto.auth.UserSignUpRequestsDto;
 import com.seniorway.seniorway.entity.user.User;
 import com.seniorway.seniorway.repository.user.UserRepository;
@@ -70,7 +70,7 @@ class AuthControllerTest {
                 .build();
         userRepository.save(user);
 
-        UserLoginRequestsDto loginDto = new UserLoginRequestsDto();
+        UserLoginRequestsDTO loginDto = new UserLoginRequestsDTO();
         loginDto.setEmail("login@example.com");
         loginDto.setPassword("password123");
 

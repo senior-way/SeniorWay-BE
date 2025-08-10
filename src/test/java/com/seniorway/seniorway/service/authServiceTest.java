@@ -2,7 +2,7 @@ package com.seniorway.seniorway.service;
 
 import com.seniorway.seniorway.entity.user.Role;
 import com.seniorway.seniorway.jwt.JwtTokenProvider;
-import com.seniorway.seniorway.dto.auth.UserLoginRequestsDto;
+import com.seniorway.seniorway.dto.auth.UserLoginRequestsDTO;
 import com.seniorway.seniorway.dto.auth.UserLoginResponseDTO;
 import com.seniorway.seniorway.dto.auth.UserSignUpRequestsDto;
 import com.seniorway.seniorway.entity.user.User;
@@ -53,7 +53,7 @@ class authServiceTest {
         when(passwordEncoder.matches("password1", "encoded")).thenReturn(true);
         when(jwtTokenProvider.createToken(1L, "test@email.com", Role.USER)).thenReturn("accessToken");
 
-        UserLoginRequestsDto request = new UserLoginRequestsDto();
+        UserLoginRequestsDTO request = new UserLoginRequestsDTO();
         request.setUsername("user1");
         request.setPassword("password1");
         request.setEmail("test@email.com");

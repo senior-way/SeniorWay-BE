@@ -2,7 +2,7 @@ package com.seniorway.seniorway.controller.auth;
 
 import com.seniorway.seniorway.entity.user.Role;
 import com.seniorway.seniorway.jwt.JwtTokenProvider;
-import com.seniorway.seniorway.dto.auth.UserLoginRequestsDto;
+import com.seniorway.seniorway.dto.auth.UserLoginRequestsDTO;
 import com.seniorway.seniorway.dto.auth.UserLoginResponseDTO;
 import com.seniorway.seniorway.dto.auth.UserSignUpRequestsDto;
 import com.seniorway.seniorway.service.auth.AuthService;
@@ -27,7 +27,7 @@ public class AuthController {
     private final JwtTokenProvider jwtTokenProvider;
 
     @PostMapping("/login")
-    public ResponseEntity<String> login(@RequestBody @Valid UserLoginRequestsDto userLoginRequest) {
+    public ResponseEntity<String> login(@RequestBody @Valid UserLoginRequestsDTO userLoginRequest) {
         UserLoginResponseDTO userLoginResponseDTO = authService.login(userLoginRequest);
         String refreshToken = jwtTokenProvider.createRefreshToken(userLoginResponseDTO.getUserId());
 

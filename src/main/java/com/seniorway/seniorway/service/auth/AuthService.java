@@ -2,7 +2,7 @@ package com.seniorway.seniorway.service.auth;
 
 import com.seniorway.seniorway.entity.user.Role;
 import com.seniorway.seniorway.jwt.JwtTokenProvider;
-import com.seniorway.seniorway.dto.auth.UserLoginRequestsDto;
+import com.seniorway.seniorway.dto.auth.UserLoginRequestsDTO;
 import com.seniorway.seniorway.dto.auth.UserLoginResponseDTO;
 import com.seniorway.seniorway.dto.auth.UserSignUpRequestsDto;
 import com.seniorway.seniorway.entity.user.User;
@@ -98,7 +98,7 @@ public class AuthService implements UserDetailsService {
      * @throws UsernameNotFoundException 사용자를 찾을 수 없는 경우
      * @throws IllegalArgumentException 비밀번호가 틀린 경우
      */
-    public UserLoginResponseDTO login(UserLoginRequestsDto userLoginRequestsDto) {
+    public UserLoginResponseDTO login(UserLoginRequestsDTO userLoginRequestsDto) {
         String email = userLoginRequestsDto.getEmail().toLowerCase(); // 소문자 통일
 
         User user = userRepository.findByEmail(email)
