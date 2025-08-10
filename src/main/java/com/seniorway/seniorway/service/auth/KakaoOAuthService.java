@@ -3,7 +3,7 @@ package com.seniorway.seniorway.service.auth;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.seniorway.seniorway.dto.oauth.KakaoUserInfo;
-import com.seniorway.seniorway.dto.auth.TokenResponse;
+import com.seniorway.seniorway.dto.auth.TokenResponseDTO;
 import com.seniorway.seniorway.entity.user.Role;
 import com.seniorway.seniorway.entity.user.User;
 import com.seniorway.seniorway.jwt.JwtTokenProvider;
@@ -27,7 +27,7 @@ public class KakaoOAuthService {
     private final RestTemplate restTemplate = new RestTemplate();
     private final PasswordEncoder passwordEncoder;
 
-    public TokenResponse loginWithKakao(String KakaoAccessToken) {
+    public TokenResponseDTO loginWithKakao(String KakaoAccessToken) {
         KakaoUserInfo kakaoUser = getKakoUserInfo(KakaoAccessToken);
 
         // DB 에서 체크 후 없으면 생성
@@ -37,7 +37,7 @@ public class KakaoOAuthService {
         String accessToken = jwtTokenProvider.createToken(user.getId(), user.getEmail(), user.getRole());
         String refreshToken = jwtTokenProvider.createRefreshToken(user.getId());
 
-        return new TokenResponse(accessToken, refreshToken);
+        return new TokenResponseDTO(accessToken, refreshToken);
     }
 
     private KakaoUserInfo getKakoUserInfo(String kakaoAccessToken) {

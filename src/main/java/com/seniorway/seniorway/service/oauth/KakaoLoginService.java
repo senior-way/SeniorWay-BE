@@ -1,6 +1,6 @@
 package com.seniorway.seniorway.service.oauth;
 
-import com.seniorway.seniorway.dto.auth.TokenResponse;
+import com.seniorway.seniorway.dto.auth.TokenResponseDTO;
 import com.seniorway.seniorway.dto.oauth.KakaoTokenResponse;
 import com.seniorway.seniorway.dto.oauth.KakaoUserInfoResponse;
 import com.seniorway.seniorway.entity.user.User;
@@ -34,7 +34,7 @@ public class KakaoLoginService {
 
     private final WebClient webClient;
 
-    public TokenResponse login(String code) {
+    public TokenResponseDTO login(String code) {
         // 1. 카카오에 Access Token 요청
         KakaoTokenResponse kakaoTokenResponse = getAccessToken(code).block();
 
@@ -49,7 +49,7 @@ public class KakaoLoginService {
         String refreshToken = jwtTokenProvider.createRefreshToken(user.getId());
 
         // 5. 두 토큰을 DTO에 담아 반환
-        return new TokenResponse(accessToken, refreshToken);
+        return new TokenResponseDTO(accessToken, refreshToken);
     }
 
     private Mono<KakaoTokenResponse> getAccessToken(String  code) {

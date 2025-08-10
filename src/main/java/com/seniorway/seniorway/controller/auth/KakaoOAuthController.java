@@ -1,6 +1,6 @@
 package com.seniorway.seniorway.controller.auth;
 
-import com.seniorway.seniorway.dto.auth.TokenResponse;
+import com.seniorway.seniorway.dto.auth.TokenResponseDTO;
 import com.seniorway.seniorway.dto.oauth.KakaoLoginRequest;
 import com.seniorway.seniorway.service.auth.KakaoOAuthService;
 import lombok.RequiredArgsConstructor;
@@ -33,10 +33,10 @@ public class KakaoOAuthController {
         System.out.println("kakao login request: " + request);
 
         // 1. 카카오 Access Token으로 서비스 로직(로그인/회원가입) 처리 후, 자체 토큰 응답 받기
-        TokenResponse tokenResponse = kakaoOAuthService.loginWithKakao(request.getKakaoAccessToken());
+        TokenResponseDTO tokenResponseDTO = kakaoOAuthService.loginWithKakao(request.getKakaoAccessToken());
 
         // 2. Refresh Token을 HttpOnly 쿠키로 설정 (AuthController와 동일한 보안 패턴)
-        ResponseCookie refreshTokenCookie = ResponseCookie.from("refreshToken", tokenResponse.getRefreshToken())
+        ResponseCookie refreshTokenCookie = ResponseCookie.from("refreshToken", tokenResponseDTO.getRefreshToken())
                 .httpOnly(true)
                 .secure(true) // HTTPS 환경에서만 쿠키 전송
                 .path("/")    // 쿠키의 유효 경로 설정
@@ -44,7 +44,7 @@ public class KakaoOAuthController {
                 .build();
 
         // 3. Access Token은 JSON 바디로 반환
-        Map<String, String> responseBody = Map.of("accessToken", tokenResponse.getAccessToken());
+        Map<String, String> responseBody = Map.of("accessToken", tokenResponseDTO.getAccessToken());
 
         // 4. 쿠키는 헤더에, Access Token은 바디에 담아 최종 응답 생성
         return ResponseEntity.ok()

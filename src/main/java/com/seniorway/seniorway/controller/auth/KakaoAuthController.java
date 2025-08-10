@@ -1,11 +1,9 @@
 package com.seniorway.seniorway.controller.auth;
 
-import com.seniorway.seniorway.dto.auth.TokenResponse;
+import com.seniorway.seniorway.dto.auth.TokenResponseDTO;
 import com.seniorway.seniorway.dto.oauth.KakaoAuthRequest;
 import com.seniorway.seniorway.service.oauth.KakaoLoginService;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import lombok.Setter;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
@@ -28,8 +26,8 @@ public class KakaoAuthController {
     public ResponseEntity<Map<String, String>> handleKakaoCallback(
             @RequestBody KakaoAuthRequest kakaoAuthRequest
     ) {
-        TokenResponse tokenResponse = kakaoLoginService.login(kakaoAuthRequest.getCode());
-        ResponseCookie refreshTokenCookie = ResponseCookie.from("refreshToken", tokenResponse.getRefreshToken())
+        TokenResponseDTO tokenResponseDTO = kakaoLoginService.login(kakaoAuthRequest.getCode());
+        ResponseCookie refreshTokenCookie = ResponseCookie.from("refreshToken", tokenResponseDTO.getRefreshToken())
                 .httpOnly(true)
                 .secure(true)
                 .path("/")
@@ -37,7 +35,7 @@ public class KakaoAuthController {
                 .build();
 
         // 3. Access Token을 꺼내서 JSON Body 생성
-        Map<String, String> responseBody = Map.of("accessToken", tokenResponse.getAccessToken());
+        Map<String, String> responseBody = Map.of("accessToken", tokenResponseDTO.getAccessToken());
 
         // 4. 쿠키는 헤더에, Access Token은 바디에 담아 최종 응답 생성
         return ResponseEntity.ok()
