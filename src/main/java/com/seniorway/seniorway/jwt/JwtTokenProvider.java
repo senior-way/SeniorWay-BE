@@ -69,7 +69,7 @@ public class JwtTokenProvider {
         // email 을 subject, role을 추가로 식별값으로 하여 Token 발급에 필요한 Claims 생성
         Claims claims = Jwts.claims().setSubject(userId.toString());
         claims.put("email", email);
-        claims.put("role", role);
+        claims.put("role", role.name());
 
         Date now = new Date();
         Date validity = new Date(now.getTime() + expirationMilliseconds);
@@ -130,9 +130,12 @@ public class JwtTokenProvider {
     }
 
     /**
-     * 주어진 Jwt Token 에서 subject(userId) 를 추출
-     * @param token
-     * @return
+     * 주어진 JWT 토큰에서 사용자 ID를 추출 
+     * 이 메서드는 JWT 토큰을 구문 분석하고, 서명을 검증하고, 
+     * 사용자 ID를 나타내는 "subject" claim을 가져옵니다.
+     *
+     * @param token JWT 토큰 문자열 
+     * @return 토큰에서 추출한 사용자 ID, 토큰이 유효하지 않으면 null 
      */
     public Long getUserIdFromToken(String token) {
         JwtParser parser = Jwts.parserBuilder()
@@ -197,14 +200,17 @@ public class JwtTokenProvider {
                 .getBody();
 
         Long userId = extractUserIdFromToken(token);
-        String role = claims.get("role", String.class);
+        String email = claims.get("email", String.class);
+        Role roleEnum = Role.valueOf(claims.get("role", String.class));
 
         List<SimpleGrantedAuthority> authorities = new ArrayList<>();
-        if (role != null) {
-            authorities.add(new SimpleGrantedAuthority("ROLE_"+role));
-        }
+        authorities.add(new SimpleGrantedAuthority("ROLE_" + roleEnum.getKey()));
 
-        AuthUser authUser = new AuthUser(userId, role);
+        AuthUser authUser = AuthUser.builder()
+                .userId(userId)
+                .email(email)
+                .role(roleEnum)
+                .build();
         return new UsernamePasswordAuthenticationToken(authUser, token, authorities);
     }
 
