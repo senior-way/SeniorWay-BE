@@ -1,11 +1,11 @@
-package com.seniorway.seniorway.dto.user;
+package com.seniorway.seniorway.dto.auth;
 
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
-public class UserLoginRequestsDto {
+public class UserLoginRequestsDTO {
     private String username;
     private String password;
     private String email;

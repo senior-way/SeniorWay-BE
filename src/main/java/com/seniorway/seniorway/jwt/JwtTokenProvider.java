@@ -1,6 +1,7 @@
-package com.seniorway.seniorway.config.jwt;
+package com.seniorway.seniorway.jwt;
 
-import com.seniorway.seniorway.dto.user.AuthUser;
+import com.seniorway.seniorway.dto.auth.AuthUserDTO;
+import com.seniorway.seniorway.enums.user.Role;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
@@ -59,16 +60,17 @@ public class JwtTokenProvider {
      *     Token의 claims 에는 userId를 subject로 설정하고, 추가로 email, role를 포함
      *     Token은 현재 시간부터 {@code expirationMilliseconds} mills 후 만료하도록 설정
      * </p>
+     * 
      * @param userId userID
      * @param email user email
      * @param role user role
      * @return 생성된 JWT Token 문자열
      */
-    public String createToken(Long userId, String email, String role) {
+    public String createToken(Long userId, String email, Role role) {
         // email 을 subject, role을 추가로 식별값으로 하여 Token 발급에 필요한 Claims 생성
         Claims claims = Jwts.claims().setSubject(userId.toString());
         claims.put("email", email);
-        claims.put("role", role);
+        claims.put("role", role.name());
 
         Date now = new Date();
         Date validity = new Date(now.getTime() + expirationMilliseconds);
@@ -87,6 +89,7 @@ public class JwtTokenProvider {
      *     Token 의 claims에는 userId을 subject로만 설정
      *     일반 Token 보다 더 긴 시간을 유효기간으로 설정
      * </p>
+     * 
      * @param userId userId
      * @return 생성된 JWT refresh Token 문자열
      */
@@ -112,6 +115,7 @@ public class JwtTokenProvider {
      *     Token의 서명을 검증하고, 유효한 경우, Token 에 포함된 subject 값을 반환
      *     Token이 만료되었건 변조되었으면 null을 반환
      * </p>
+     * 
      * @param token JWT 문자열
      * @return Token에 포함돈 userId, 유효하지 않으면 null
      */
@@ -129,9 +133,12 @@ public class JwtTokenProvider {
     }
 
     /**
-     * 주어진 Jwt Token 에서 subject(userId) 를 추출
-     * @param token
-     * @return
+     * 주어진 JWT 토큰에서 사용자 ID를 추출 
+     * 이 메서드는 JWT 토큰을 구문 분석하고, 서명을 검증하고, 
+     * 사용자 ID를 나타내는 "subject" claim을 가져옵니다.
+     *
+     * @param token JWT 토큰 문자열 
+     * @return 토큰에서 추출한 사용자 ID, 토큰이 유효하지 않으면 null 
      */
     public Long getUserIdFromToken(String token) {
         JwtParser parser = Jwts.parserBuilder()
@@ -144,8 +151,14 @@ public class JwtTokenProvider {
 
     /**
      * JWT Token 에서 email claim을 추출
-     * @param token
-     * @return
+     * <p>
+     *     Token을 파싱하여 claims에서 "email" 키에 해당하는 값을 추출합니다.
+     *     Token이 유효하지 않거나 email claim이 없는 경우 예외가 발생할 수 있습니다.
+     * </p>
+     * 
+     * @param token JWT 토큰 문자열
+     * @return 토큰에서 추출한 email 값
+     * @throws JwtException 토큰이 유효하지 않거나 파싱에 실패한 경우
      */
     public String getEmailFromToken(String token) {
         Claims claims = Jwts.parserBuilder()
@@ -158,16 +171,15 @@ public class JwtTokenProvider {
     }
 
     /**
-     * 주어진 JWT 토근의 유효성을 검증함
+     * 주어진 JWT 토큰의 유효성을 검증함
      * <p>
-     *     이 메서드는 토근의 서명이 유효한지, 형식이 올바른지, 만료된지 않았는지 확인
+     *     이 메서드는 토큰의 서명이 유효한지, 형식이 올바른지, 만료되지 않았는지 확인합니다.
      *     {@link JwtException}이나 {@link IllegalArgumentException}이 발생할 경우,
      *     유효하지 않은 토큰으로 간주하고 {@code false}를 반환합니다.
      * </p>
-     *
-     *
-     * @param token
-     * @return
+     * 
+     * @param token 검증할 JWT 토큰 문자열
+     * @return 토큰이 유효한 경우 {@code true}, 그렇지 않은 경우 {@code false}
      */
     public boolean validateToken(String token) {
         try {
@@ -182,7 +194,7 @@ public class JwtTokenProvider {
      * JWT 토큰에서 사용자 인증 정보를 생성하여 반환합니다.
      * <p>
      * 토큰을 파싱하여 userId와 role 정보를 추출하고,
-     * 이를 바탕으로 {@link AuthUser} 객체를 생성합니다.
+     * 이를 바탕으로 {@link AuthUserDTO} 객체를 생성합니다.
      * 그리고 권한 목록(List<SimpleGrantedAuthority>)을 만들어 {@link UsernamePasswordAuthenticationToken}을 반환합니다.
      * </p>
      *
@@ -196,15 +208,18 @@ public class JwtTokenProvider {
                 .getBody();
 
         Long userId = extractUserIdFromToken(token);
-        String role = claims.get("role", String.class);
+        String email = claims.get("email", String.class);
+        Role roleEnum = Role.valueOf(claims.get("role", String.class));
 
         List<SimpleGrantedAuthority> authorities = new ArrayList<>();
-        if (role != null) {
-            authorities.add(new SimpleGrantedAuthority("ROLE_"+role));
-        }
+        authorities.add(new SimpleGrantedAuthority("ROLE_" + roleEnum.getKey()));
 
-        AuthUser authUser = new AuthUser(userId, role);
-        return new UsernamePasswordAuthenticationToken(authUser, token, authorities);
+        AuthUserDTO authUserDTO = AuthUserDTO.builder()
+                .userId(userId)
+                .email(email)
+                .role(roleEnum)
+                .build();
+        return new UsernamePasswordAuthenticationToken(authUserDTO, token, authorities);
     }
 
     /**
@@ -216,8 +231,9 @@ public class JwtTokenProvider {
      *     <li>Authorization 헤더에서 "Bearer " 접수사를 가진 토큰</li>
      *     <li>쿠키 중 이름이 "refreshToken"인 쿠키의 값</li>
      * </ol>
-     * @param request
-     * @return
+     *
+     * @param request HTTP request 객체
+     * @return 토큰이 발견되면 그 문자열, 없으면 null
      */
     public String resolveToken(HttpServletRequest request) {
         // 1. Authorization 헤더 체크
