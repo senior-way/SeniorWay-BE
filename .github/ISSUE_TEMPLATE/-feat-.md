@@ -1,5 +1,5 @@
 ---
-name: 이학준
+name: [feat]
 about: 기능 추가 이슈 템플릿
 title: "[feat]"
 labels: ''
