@@ -8,8 +8,14 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.List;
 
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
+
+    private static final List<String> EXCLUDE_URLS = List.of(
+            "/api/auth/kakao",
+            "/api/auth/login"
+    );
 
     private final JwtTokenProvider jwtTokenProvider;
 
@@ -38,9 +44,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
         String path = request.getRequestURI();
-        // 로그인, 회원가입, 카카오 인증 등 토큰 없이 접근해야 하는 경로
-        return path.startsWith("/api/auth/kakao") || path.startsWith("/api/auth/login");
+        return EXCLUDE_URLS.stream().anyMatch(path::startsWith);
     }
-
 }
 
