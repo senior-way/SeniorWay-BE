@@ -1,6 +1,6 @@
 package com.seniorway.seniorway.dto.oauth;
 
-import com.seniorway.seniorway.entity.user.Role;
+import com.seniorway.seniorway.enums.user.Role;
 import com.seniorway.seniorway.entity.user.User;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

@@ -1,7 +1,7 @@
 package com.seniorway.seniorway.jwt;
 
 import com.seniorway.seniorway.dto.auth.AuthUserDTO;
-import com.seniorway.seniorway.entity.user.Role;
+import com.seniorway.seniorway.enums.user.Role;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;

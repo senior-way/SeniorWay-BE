@@ -1,6 +1,7 @@
 package com.seniorway.seniorway.entity.user;
 
 
+import com.seniorway.seniorway.enums.user.Role;
 import jakarta.persistence.*;
 import lombok.*;
 

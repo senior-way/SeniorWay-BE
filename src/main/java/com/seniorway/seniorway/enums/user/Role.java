@@ -1,4 +1,4 @@
-package com.seniorway.seniorway.entity.user;
+package com.seniorway.seniorway.enums.user;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

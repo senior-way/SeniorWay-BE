@@ -1,6 +1,6 @@
 package com.seniorway.seniorway.controller.auth;
 
-import com.seniorway.seniorway.entity.user.Role;
+import com.seniorway.seniorway.enums.user.Role;
 import com.seniorway.seniorway.jwt.JwtTokenProvider;
 import com.seniorway.seniorway.dto.auth.UserLoginRequestsDTO;
 import com.seniorway.seniorway.dto.auth.UserLoginResponseDTO;

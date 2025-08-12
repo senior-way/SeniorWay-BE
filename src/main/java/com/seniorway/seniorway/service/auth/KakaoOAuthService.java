@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.seniorway.seniorway.dto.oauth.KakaoUserInfo;
 import com.seniorway.seniorway.dto.auth.TokenResponseDTO;
-import com.seniorway.seniorway.entity.user.Role;
+import com.seniorway.seniorway.enums.user.Role;
 import com.seniorway.seniorway.entity.user.User;
 import com.seniorway.seniorway.jwt.JwtTokenProvider;
 import com.seniorway.seniorway.repository.user.UserRepository;

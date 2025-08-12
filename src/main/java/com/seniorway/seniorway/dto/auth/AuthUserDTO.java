@@ -1,6 +1,6 @@
 package com.seniorway.seniorway.dto.auth;
 
-import com.seniorway.seniorway.entity.user.Role;
+import com.seniorway.seniorway.enums.user.Role;
 import lombok.*;
 
 @Getter
