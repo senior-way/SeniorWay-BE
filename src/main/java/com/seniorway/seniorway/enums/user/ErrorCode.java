@@ -24,6 +24,7 @@ public enum ErrorCode {
     // 401 Unauthorized
     AUTH_TOKEN_INVALID(HttpStatus.UNAUTHORIZED, "유효하지 않거나 만료된 토큰입니다."),
     OAUTH_FAILURE(HttpStatus.UNAUTHORIZED, "OAuth 인증에 실패했습니다."),
+    INVALID_PASSWORD(HttpStatus.UNAUTHORIZED, "비밀번호가 일치하지 않습니다."),
 
     // 403 Forbidden
     FORBIDDEN(HttpStatus.FORBIDDEN, "권한이 없는 요청입니다."),
