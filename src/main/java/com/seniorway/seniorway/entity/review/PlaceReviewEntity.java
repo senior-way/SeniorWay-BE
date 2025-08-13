@@ -1,7 +1,7 @@
 package com.seniorway.seniorway.entity.review;
 
 
-import com.seniorway.seniorway.entity.User;
+import com.seniorway.seniorway.entity.user.User;
 import com.seniorway.seniorway.entity.place.PlaceEntity;
 import com.seniorway.seniorway.entity.common.BaseTimeEntity;
 import jakarta.persistence.*;
