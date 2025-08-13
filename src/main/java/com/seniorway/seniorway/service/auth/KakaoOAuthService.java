@@ -4,8 +4,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.seniorway.seniorway.dto.oauth.KakaoUserInfo;
 import com.seniorway.seniorway.dto.auth.TokenResponseDTO;
+import com.seniorway.seniorway.enums.user.ErrorCode;
 import com.seniorway.seniorway.enums.user.Role;
 import com.seniorway.seniorway.entity.user.User;
+import com.seniorway.seniorway.exception.CustomException;
 import com.seniorway.seniorway.jwt.JwtTokenProvider;
 import com.seniorway.seniorway.repository.user.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -53,6 +55,10 @@ public class KakaoOAuthService {
                 url, HttpMethod.GET, entity, String.class
         );
 
+        if (!response.getStatusCode().is2xxSuccessful()) {
+            throw new CustomException(ErrorCode.KAKAO_API_ERROR);
+        }
+
         try {
             // JSON parsing
             ObjectMapper mapper = new ObjectMapper();
@@ -60,11 +66,11 @@ public class KakaoOAuthService {
 
             Long id = json.get("id").asLong();
             String email = json.path("kakao_account").path("email").asText(null);
-            String nickname = json.path("properties").path("nickname").asText();
+            String nickname = json.path("properties").path("nickname").asText("unknown");
 
             return new KakaoUserInfo(id, email, nickname);
         } catch (Exception e) {
-            throw new RuntimeException("카카오 사용자 정보 조회 실패", e);
+            throw new CustomException(ErrorCode.OAUTH_FAILURE);
         }
     }
 
