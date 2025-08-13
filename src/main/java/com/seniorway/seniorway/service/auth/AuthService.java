@@ -1,6 +1,8 @@
 package com.seniorway.seniorway.service.auth;
 
+import com.seniorway.seniorway.enums.user.ErrorCode;
 import com.seniorway.seniorway.enums.user.Role;
+import com.seniorway.seniorway.exception.CustomException;
 import com.seniorway.seniorway.jwt.JwtTokenProvider;
 import com.seniorway.seniorway.dto.auth.UserLoginRequestsDTO;
 import com.seniorway.seniorway.dto.auth.UserLoginResponseDTO;
@@ -70,7 +72,7 @@ public class AuthService implements UserDetailsService {
         String email = userSignUpRequestsDto.getEmail().toLowerCase(); // 소문자 통일
         
         if (userRepository.existsByEmail(email)) {
-            throw new IllegalArgumentException("Email address already in use");
+            throw new CustomException(ErrorCode.AUTH_EMAIL_EXISTS);
         }
 
         User user = User.builder()
@@ -105,7 +107,7 @@ public class AuthService implements UserDetailsService {
                 .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다."));
 
         if (!passwordEncoder.matches(userLoginRequestsDto.getPassword(), user.getPassword())) {
-            throw new IllegalArgumentException("비밀번호가 틀립니다");
+            throw new CustomException(ErrorCode.INVALID_PASSWORD);
         }
 
         String accessToken = jwtTokenProvider.createToken(user.getId(), user.getEmail(), user.getRole());
