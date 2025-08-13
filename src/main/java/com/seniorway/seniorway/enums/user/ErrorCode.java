@@ -38,6 +38,7 @@ public enum ErrorCode {
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 오류가 발생했습니다."),
 
     // 502 Bad Gateway
+    KAKAO_API_ERROR(HttpStatus.BAD_GATEWAY, "카카오 API 호출 실패"),
     EXTERNAL_API_ERROR(HttpStatus.BAD_GATEWAY, "외부 API 호출 실패");
 
     private final HttpStatus httpStatus;
