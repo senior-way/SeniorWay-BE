@@ -1,6 +1,6 @@
 package com.seniorway.seniorway.entity.review;
 
-import com.seniorway.seniorway.entity.User;
+import com.seniorway.seniorway.entity.user.User;
 import com.seniorway.seniorway.entity.common.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.*;
