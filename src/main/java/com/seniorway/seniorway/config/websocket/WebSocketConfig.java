@@ -1,7 +1,7 @@
 package com.seniorway.seniorway.config.websocket;
 
 import com.seniorway.seniorway.jwt.JwtTokenProvider;
-import com.seniorway.seniorway.security.websocket.JwtHandshakeInterceptor;
+import com.seniorway.seniorway.security.JwtHandshakeInterceptor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;

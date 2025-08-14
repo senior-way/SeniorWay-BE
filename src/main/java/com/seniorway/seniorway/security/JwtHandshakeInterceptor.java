@@ -1,4 +1,4 @@
-package com.seniorway.seniorway.security.websocket;
+package com.seniorway.seniorway.security;
 
 import com.seniorway.seniorway.jwt.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
