@@ -1,6 +1,7 @@
 package com.seniorway.seniorway.service.webSocket;
 
 import com.seniorway.seniorway.dto.webSocket.LocationMessage;
+import com.seniorway.seniorway.security.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
@@ -12,7 +13,7 @@ public class LocationServiceImpl implements LocationService {
     private final SimpMessagingTemplate messagingTemplate;
 
     @Override
-    public void handleLocation(LocationMessage msg, String authHeader) {
+    public void handleLocation(LocationMessage msg, CustomUserDetails userDetails) {
         saveLocation(msg);
         sendLocationToGuardian(msg);
     }
