@@ -27,6 +27,7 @@ public enum ErrorCode {
     INVALID_PASSWORD(HttpStatus.UNAUTHORIZED, "비밀번호가 일치하지 않습니다."),
 
     // 403 Forbidden
+    GUARDIAN_ACCESS_DENIED(HttpStatus.FORBIDDEN, "해당 사용자의 위치를 볼 권한이 없습니다."),
     FORBIDDEN(HttpStatus.FORBIDDEN, "권한이 없는 요청입니다."),
 
     // 404 Not Found
