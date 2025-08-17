@@ -21,8 +21,7 @@ public class UserLocation {
     @GeneratedValue()
     private Long UserLocationId;
 
-    private Long guardianId;
-    private Long UserId;
+    private Long userId;
 
     private Double latitude;      // 위도
     private Double longitude;     // 경도
