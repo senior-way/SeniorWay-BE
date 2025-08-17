@@ -1,8 +1,10 @@
 package com.seniorway.seniorway.service.webSocket;
 
 import com.seniorway.seniorway.dto.webSocket.LocationMessage;
+import com.seniorway.seniorway.event.location.LocationSavedEvent;
 import com.seniorway.seniorway.security.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
@@ -13,10 +15,12 @@ public class LocationServiceImpl implements LocationService {
 
     private final SimpMessagingTemplate messagingTemplate;
     private final StringRedisTemplate redisTemplate;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     @Override
     public void handleLocation(LocationMessage msg, CustomUserDetails userDetails) {
         saveLocation(msg);
+        applicationEventPublisher.publishEvent(new LocationSavedEvent(msg));
         sendLocationToGuardian(msg);
     }
 
