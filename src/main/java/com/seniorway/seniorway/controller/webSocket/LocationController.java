@@ -2,7 +2,7 @@ package com.seniorway.seniorway.controller.webSocket;
 
 import com.seniorway.seniorway.dto.location.LocationMessage;
 import com.seniorway.seniorway.security.CustomUserDetails;
-import com.seniorway.seniorway.service.webSocket.LocationService;
+import com.seniorway.seniorway.service.location.LocationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;

@@ -1,4 +1,4 @@
-package com.seniorway.seniorway.service.webSocket;
+package com.seniorway.seniorway.service.location;
 
 import com.seniorway.seniorway.dto.location.LocationMessage;
 import com.seniorway.seniorway.event.location.LocationSavedEvent;
