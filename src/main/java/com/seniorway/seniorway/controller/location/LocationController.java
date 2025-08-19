@@ -1,4 +1,4 @@
-package com.seniorway.seniorway.controller.webSocket;
+package com.seniorway.seniorway.controller.location;
 
 import com.seniorway.seniorway.dto.location.LocationMessage;
 import com.seniorway.seniorway.security.CustomUserDetails;
