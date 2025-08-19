@@ -1,6 +1,6 @@
 package com.seniorway.seniorway.listener.location;
 
-import com.seniorway.seniorway.dto.webSocket.LocationMessage;
+import com.seniorway.seniorway.dto.location.LocationMessage;
 import com.seniorway.seniorway.entity.location.UserLocation;
 import com.seniorway.seniorway.event.location.LocationSavedEvent;
 import com.seniorway.seniorway.repository.location.UserLocationRepository;

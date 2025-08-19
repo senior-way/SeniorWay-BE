@@ -1,4 +1,4 @@
-package com.seniorway.seniorway.dto.webSocket;
+package com.seniorway.seniorway.dto.location;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

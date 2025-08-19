@@ -1,6 +1,6 @@
 package com.seniorway.seniorway.controller.webSocket;
 
-import com.seniorway.seniorway.dto.webSocket.LocationMessage;
+import com.seniorway.seniorway.dto.location.LocationMessage;
 import com.seniorway.seniorway.security.CustomUserDetails;
 import com.seniorway.seniorway.service.webSocket.LocationService;
 import lombok.RequiredArgsConstructor;

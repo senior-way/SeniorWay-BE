@@ -1,6 +1,6 @@
 package com.seniorway.seniorway.event.location;
 
-import com.seniorway.seniorway.dto.webSocket.LocationMessage;
+import com.seniorway.seniorway.dto.location.LocationMessage;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
