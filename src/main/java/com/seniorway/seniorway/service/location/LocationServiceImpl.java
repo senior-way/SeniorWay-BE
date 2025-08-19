@@ -1,13 +1,17 @@
 package com.seniorway.seniorway.service.location;
 
 import com.seniorway.seniorway.dto.location.LocationMessage;
+import com.seniorway.seniorway.entity.location.UserLocation;
 import com.seniorway.seniorway.event.location.LocationSavedEvent;
+import com.seniorway.seniorway.repository.location.UserLocationRepository;
 import com.seniorway.seniorway.security.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
@@ -16,6 +20,7 @@ public class LocationServiceImpl implements LocationService {
     private final SimpMessagingTemplate messagingTemplate;
     private final StringRedisTemplate redisTemplate;
     private final ApplicationEventPublisher applicationEventPublisher;
+    private final UserLocationRepository userLocationRepository;
 
     @Override
     public void handleLocation(LocationMessage msg, CustomUserDetails userDetails) {
@@ -35,7 +40,15 @@ public class LocationServiceImpl implements LocationService {
         redisTemplate.opsForList().leftPush(historyKey, value);
         redisTemplate.opsForList().trim(historyKey, 0, 9);
 
-        // TODO: DB에 위치 히스토리 저장
+        // 3) DB 저장
+        UserLocation userLocation = UserLocation.builder()
+                .userId(msg.getUserId())
+                .latitude(msg.getLatitude())
+                .longitude(msg.getLongitude())
+                .timestamp(LocalDateTime.now())
+                .build();
+
+        userLocationRepository.save(userLocation);
     }
 
     private void sendLocationToGuardian(LocationMessage msg) {
