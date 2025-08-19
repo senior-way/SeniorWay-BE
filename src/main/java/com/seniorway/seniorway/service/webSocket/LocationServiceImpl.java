@@ -24,7 +24,7 @@ public class LocationServiceImpl implements LocationService {
         sendLocationToGuardian(msg);
     }
 
-    private void saveLocation(LocationMessage msg) {
+    public void saveLocation(LocationMessage msg) {
         // 1) 최신 위치 저장
         String key = "location: " + msg.getUserId();
         String value = msg.getLatitude() + "," + msg.getLongitude() + "," + System.currentTimeMillis();
