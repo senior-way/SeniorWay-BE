@@ -1,6 +1,7 @@
 package com.seniorway.seniorway.service.location;
 
 import com.seniorway.seniorway.dto.location.LocationMessage;
+import com.seniorway.seniorway.repository.location.UserLocationRepository;
 import com.seniorway.seniorway.security.CustomUserDetails;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -50,6 +51,11 @@ class LocationServiceImplTest {
         @Bean
         ApplicationEventPublisher applicationEventPublisher() {
             return mock(ApplicationEventPublisher.class);  // Event 발행 Mock
+        }
+
+        @Bean
+        UserLocationRepository userLocationRepository() {
+            return mock(UserLocationRepository.class);
         }
 
         @Bean
