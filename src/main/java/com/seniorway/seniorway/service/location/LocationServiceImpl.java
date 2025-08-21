@@ -30,13 +30,15 @@ public class LocationServiceImpl implements LocationService {
     }
 
     public void saveLocation(LocationMessage msg) {
-        // 1) 최신 위치 저장
+        // 1) 최신 위치 저장 (Hash)
         String key = "location: " + msg.getUserId();
-        String value = msg.getLatitude() + "," + msg.getLongitude() + "," + System.currentTimeMillis();
-        redisTemplate.opsForValue().set(key, value);
+        redisTemplate.opsForHash().put(key, "latitude", String.valueOf(msg.getLatitude()));
+        redisTemplate.opsForHash().put(key, "longitude", String.valueOf(msg.getLongitude()));
+        redisTemplate.opsForHash().put(key, "timestamp", String.valueOf(msg.getTimestamp()));
 
         // 2) 최근 위치 히스토리 (최대 10개)
         String historyKey = "location:history:" + msg.getUserId();
+        String value = msg.getLatitude() + "," + msg.getLongitude() + "," + System.currentTimeMillis();
         redisTemplate.opsForList().leftPush(historyKey, value);
         redisTemplate.opsForList().trim(historyKey, 0, 9);
 
