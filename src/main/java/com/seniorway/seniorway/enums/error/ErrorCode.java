@@ -1,4 +1,4 @@
-package com.seniorway.seniorway.enums.user;
+package com.seniorway.seniorway.enums.error;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

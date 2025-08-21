@@ -1,6 +1,6 @@
 package com.seniorway.seniorway.service.auth;
 
-import com.seniorway.seniorway.enums.user.ErrorCode;
+import com.seniorway.seniorway.enums.error.ErrorCode;
 import com.seniorway.seniorway.enums.user.Role;
 import com.seniorway.seniorway.exception.CustomException;
 import com.seniorway.seniorway.jwt.JwtTokenProvider;

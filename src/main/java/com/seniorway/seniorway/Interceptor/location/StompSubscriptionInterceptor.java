@@ -1,6 +1,6 @@
 package com.seniorway.seniorway.Interceptor.location;
 
-import com.seniorway.seniorway.enums.user.ErrorCode;
+import com.seniorway.seniorway.enums.error.ErrorCode;
 import com.seniorway.seniorway.exception.CustomException;
 import com.seniorway.seniorway.repository.location.GuardianRelationRepository;
 import com.seniorway.seniorway.security.CustomUserDetails;
