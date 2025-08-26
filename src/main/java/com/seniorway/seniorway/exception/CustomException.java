@@ -1,6 +1,6 @@
 package com.seniorway.seniorway.exception;
 
-import com.seniorway.seniorway.enums.user.ErrorCode;
+import com.seniorway.seniorway.enums.error.ErrorCode;
 import lombok.Getter;
 
 @Getter
