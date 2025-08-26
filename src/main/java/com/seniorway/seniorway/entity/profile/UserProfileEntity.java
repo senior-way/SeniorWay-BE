@@ -1,6 +1,6 @@
 package com.seniorway.seniorway.entity.profile;
 
-import com.seniorway.seniorway.entity.User;
+import com.seniorway.seniorway.entity.user.User;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;

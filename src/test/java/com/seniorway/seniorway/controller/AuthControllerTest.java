@@ -1,9 +1,10 @@
 package com.seniorway.seniorway.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.seniorway.seniorway.dto.user.UserLoginRequestsDto;
-import com.seniorway.seniorway.dto.user.UserSignUpRequestsDto;
-import com.seniorway.seniorway.entity.User;
+import com.seniorway.seniorway.dto.auth.UserLoginRequestsDTO;
+import com.seniorway.seniorway.dto.auth.UserSignUpRequestsDTO;
+import com.seniorway.seniorway.enums.user.Role;
+import com.seniorway.seniorway.entity.user.User;
 import com.seniorway.seniorway.repository.user.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -37,7 +38,7 @@ class AuthControllerTest {
     @Test
     void signupSuccess() {
         // given
-        UserSignUpRequestsDto signUpDto = new UserSignUpRequestsDto();
+        UserSignUpRequestsDTO signUpDto = new UserSignUpRequestsDTO();
         signUpDto.setUsername("testuser");
         signUpDto.setPassword("password123");
         signUpDto.setEmail("test@example.com");
@@ -66,11 +67,11 @@ class AuthControllerTest {
                 .username("loginuser")
                 .email("login@example.com")
                 .password("password123")
-                .role("ROLE_USER")
+                .role(Role.USER)
                 .build();
         userRepository.save(user);
 
-        UserLoginRequestsDto loginDto = new UserLoginRequestsDto();
+        UserLoginRequestsDTO loginDto = new UserLoginRequestsDTO();
         loginDto.setEmail("login@example.com");
         loginDto.setPassword("password123");
 

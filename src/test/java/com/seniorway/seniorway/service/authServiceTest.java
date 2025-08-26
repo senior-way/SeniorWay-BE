@@ -1,12 +1,13 @@
 package com.seniorway.seniorway.service;
 
-import com.seniorway.seniorway.config.jwt.JwtTokenProvider;
-import com.seniorway.seniorway.dto.user.UserLoginRequestsDto;
-import com.seniorway.seniorway.dto.user.UserLoginResponseDTO;
-import com.seniorway.seniorway.dto.user.UserSignUpRequestsDto;
-import com.seniorway.seniorway.entity.User;
+import com.seniorway.seniorway.enums.user.Role;
+import com.seniorway.seniorway.jwt.JwtTokenProvider;
+import com.seniorway.seniorway.dto.auth.UserLoginRequestsDTO;
+import com.seniorway.seniorway.dto.auth.UserLoginResponseDTO;
+import com.seniorway.seniorway.dto.auth.UserSignUpRequestsDTO;
+import com.seniorway.seniorway.entity.user.User;
 import com.seniorway.seniorway.repository.user.UserRepository;
-import com.seniorway.seniorway.service.user.UserService;
+import com.seniorway.seniorway.service.auth.AuthService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -19,10 +20,10 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-class UserServiceTest {
+class authServiceTest {
 
     @InjectMocks
-    private UserService userService;
+    private AuthService authService;
 
     @Mock
     private UserRepository userRepository;
@@ -44,21 +45,21 @@ class UserServiceTest {
         User user = User.builder()
                 .email("test@email.com")
                 .password("encoded")
-                .role("ROLE_USER")
+                .role(Role.USER)
                 .id(1L)
                 .build();
 
         when(userRepository.findByEmail("test@email.com")).thenReturn(Optional.of(user));
         when(passwordEncoder.matches("password1", "encoded")).thenReturn(true);
-        when(jwtTokenProvider.createToken(1L, "test@email.com", "ROLE_USER")).thenReturn("accessToken");
+        when(jwtTokenProvider.createToken(1L, "test@email.com", Role.USER)).thenReturn("accessToken");
 
-        UserLoginRequestsDto request = new UserLoginRequestsDto();
+        UserLoginRequestsDTO request = new UserLoginRequestsDTO();
         request.setUsername("user1");
         request.setPassword("password1");
         request.setEmail("test@email.com");
 
         // when
-        UserLoginResponseDTO result = userService.login(request);
+        UserLoginResponseDTO result = authService.login(request);
 
         // then
         assertEquals("accessToken", result.getToken());
@@ -68,7 +69,7 @@ class UserServiceTest {
     @Test
     void signupSuccess() throws Exception {
         // given
-        UserSignUpRequestsDto dto = new UserSignUpRequestsDto();
+        UserSignUpRequestsDTO dto = new UserSignUpRequestsDTO();
         dto.setUsername("user1");
         dto.setPassword("password1");
         dto.setEmail("test@email.com");
@@ -81,15 +82,15 @@ class UserServiceTest {
                 .username("user1")
                 .email("test@email.com")
                 .password("encodedPass")
-                .role("ROLE_USER")
+                .role(Role.USER)
                 .id(2L)
                 .build();
 
         when(userRepository.save(any(User.class))).thenReturn(savedUser);
-        when(jwtTokenProvider.createToken(2L, "test@email.com", "ROLE_USER")).thenReturn("signupToken");
+        when(jwtTokenProvider.createToken(2L, "test@email.com", Role.USER)).thenReturn("signupToken");
 
         // when
-        String token = userService.signUp(dto);
+        String token = authService.signUp(dto);
 
         // then
         assertEquals("signupToken", token);
