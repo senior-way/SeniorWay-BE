@@ -3,15 +3,9 @@ package com.seniorway.seniorway.entity.touristAudioGuide;
 import com.seniorway.seniorway.entity.touristSpot.TouristSpotEntity;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
-import lombok.*;
 
 @Entity
 @Table(name = "tourist_audio_guides")
-@Getter
-@Setter
-@AllArgsConstructor
-@NoArgsConstructor
-@Builder
 public class TouristAudioGuideEntity {
 
     @Id

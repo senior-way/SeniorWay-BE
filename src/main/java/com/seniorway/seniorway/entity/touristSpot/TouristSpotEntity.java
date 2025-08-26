@@ -1,8 +1,8 @@
 package com.seniorway.seniorway.entity.touristSpot;
 
 import jakarta.persistence.*;
-import java.time.LocalDateTime;
 import lombok.*;
+import com.seniorway.seniorway.entity.common.BaseTimeEntity;
 
 @Entity
 @Table(name = "tourist_spot")
@@ -11,7 +11,7 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class TouristSpotEntity {
+public class TouristSpotEntity extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -87,11 +87,7 @@ public class TouristSpotEntity {
     @Column(name = "cpyrhtDivCd", length = 20)
     private String cpyrhtDivCd;
 
-    @Column(name = "created_time")
-    private LocalDateTime createdTime;
-
-    @Column(name = "modified_time")
-    private LocalDateTime modifiedTime;
+    // createdTime, modifiedTime 필드 제거
 
     // ...getter/setter, 생성자 등...
 }
