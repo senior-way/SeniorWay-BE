@@ -25,7 +25,7 @@ public class TouristSpotService {
     private final TouristSpotRepository touristSpotRepository;
     private final Logger logger = LoggerFactory.getLogger(TouristSpotService.class);
 
-    @Value("${KTO_TOUR_INFO_API_KEY}")
+    @Value("${KTO.KTO_TOUR_INFO_API_KEY}")
     private String apiKey;
 
     public void fetchAndSaveTouristSpots() {
