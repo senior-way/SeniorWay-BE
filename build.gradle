@@ -64,6 +64,15 @@ dependencies {
 	// WebClilent
 	implementation 'org.springframework.boot:spring-boot-starter-webflux'
 
+	// WebSocket
+	implementation 'org.springframework.boot:spring-boot-starter-websocket'
+	implementation 'org.springframework.boot:spring-boot-starter-activemq'
+
+	// Redis
+	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+	implementation 'org.springframework.boot:spring-boot-starter-data-redis-reactive' // 선택, Reactive 사용 시
+	implementation 'io.lettuce:lettuce-core' // Redis client
+
 }
 
 tasks.named('test') {

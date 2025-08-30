@@ -171,6 +171,24 @@ public class JwtTokenProvider {
     }
 
     /**
+     * JWT 토큰에서 사용자 권한(role)을 추출합니다.
+     * 이 메서드는 토큰을 파싱하고, 서명을 검증한 후,
+     * "role" claim을 조회하여 사용자의 권한을 결정합니다.
+     *
+     * @param token JWT 토큰 문자열
+     * @return 토큰에서 추출한 사용자 권한을 {@code Role} enum으로 반환
+     */
+    public Role getRoleFromToken(String token) {
+        Claims claims = Jwts.parserBuilder()
+                .setSigningKey(key)
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+
+        return Role.valueOf(claims.get("role", String.class));
+    }
+
+    /**
      * 주어진 JWT 토큰의 유효성을 검증함
      * <p>
      *     이 메서드는 토큰의 서명이 유효한지, 형식이 올바른지, 만료되지 않았는지 확인합니다.
