@@ -36,6 +36,7 @@ public class TouristSpotService {
 
         while (hasMore) {
             try {
+                //TODO: 나중에 urlBuilder로 변경 고려
                 String encodedApiKey = URLEncoder.encode(apiKey, StandardCharsets.UTF_8);
                 String urlStr = "https://apis.data.go.kr/B551011/KorService2/areaBasedList2"
                         + "?serviceKey=" + encodedApiKey
