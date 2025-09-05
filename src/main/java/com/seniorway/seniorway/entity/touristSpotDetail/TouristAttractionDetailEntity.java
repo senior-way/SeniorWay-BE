@@ -2,6 +2,7 @@ package com.seniorway.seniorway.entity.touristSpotDetail;
 
 import jakarta.persistence.*;
 import lombok.*;
+import com.seniorway.seniorway.entity.touristSpot.TouristSpotEntity;
 
 @Entity
 @Table(name = "TouristAttraction")
@@ -13,14 +14,22 @@ public class TouristAttractionDetailEntity {
 
     @Id
     @Column(name = "content_id")
-    private Integer contentId;
+    private String contentId;
 
     @Column(name = "content_type_id", nullable = false)
-    private Integer contentTypeId;
+    private String contentTypeId;
 
-    private Integer heritage1;
-    private Integer heritage2;
-    private Integer heritage3;
+    // TouristSpotEntity와의 연관관계 추가
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumns({
+        @JoinColumn(name = "content_id", referencedColumnName = "content_id", insertable = false, updatable = false),
+        @JoinColumn(name = "content_type_id", referencedColumnName = "content_type_id", insertable = false, updatable = false)
+    })
+    private TouristSpotEntity touristSpot;
+
+    private String heritage1;
+    private String heritage2;
+    private String heritage3;
 
     @Column(length = 50)
     private String infoCenter;
@@ -37,7 +46,8 @@ public class TouristAttractionDetailEntity {
     @Column(length = 50)
     private String expAgeRange;
 
-    private Integer accomCount;
+    @Column(length = 20)
+    private String accomCount;
 
     @Column(length = 50)
     private String useSeason;

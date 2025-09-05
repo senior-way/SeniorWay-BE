@@ -2,7 +2,17 @@ package com.seniorway.seniorway.service.touristSpot;
 
 import com.seniorway.seniorway.dto.touristSpot.TouristSpotSaveRequestDto;
 import com.seniorway.seniorway.entity.touristSpot.TouristSpotEntity;
+import com.seniorway.seniorway.entity.touristSpotDetail.FoodDetailEntity;
+import com.seniorway.seniorway.entity.touristSpotDetail.LeisureSportsDetailEntity;
+import com.seniorway.seniorway.entity.touristSpotDetail.PerformanceExhibitionDetailEntity;
+import com.seniorway.seniorway.entity.touristSpotDetail.ShoppingDetailEntity;
+import com.seniorway.seniorway.entity.touristSpotDetail.TouristAttractionDetailEntity;
 import com.seniorway.seniorway.repository.touristSpot.TouristSpotRepository;
+import com.seniorway.seniorway.repository.touristSpotDetail.FoodDetailRepository;
+import com.seniorway.seniorway.repository.touristSpotDetail.LeisureSportsDetailRepository;
+import com.seniorway.seniorway.repository.touristSpotDetail.PerformanceExhibitionDetailRepository;
+import com.seniorway.seniorway.repository.touristSpotDetail.ShoppingDetailRepository;
+import com.seniorway.seniorway.repository.touristSpotDetail.TouristAttractionDetailRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -23,6 +33,11 @@ import org.json.JSONObject;
 public class TouristSpotService {
 
     private final TouristSpotRepository touristSpotRepository;
+    private final FoodDetailRepository foodDetailRepository;
+    private final LeisureSportsDetailRepository leisureSportsDetailRepository;
+    private final PerformanceExhibitionDetailRepository performanceExhibitionDetailRepository;
+    private final ShoppingDetailRepository shoppingDetailRepository;
+    private final TouristAttractionDetailRepository touristAttractionDetailRepository;
     private final Logger logger = LoggerFactory.getLogger(TouristSpotService.class);
 
     @Value("${KTO.KTO_TOUR_INFO_API_KEY}")
@@ -166,5 +181,179 @@ public class TouristSpotService {
                 break;
             }
         }
+    }
+
+    public void fetchAndSaveTouristSpotDetails() {
+        var spots = touristSpotRepository.findAll();
+        logger.info("[TouristSpotService] 관광지 상세정보 저장 시작. 대상 관광지 수: {}", spots.size());
+        for (TouristSpotEntity spot : spots) {
+            String contentId = spot.getContentId();
+            String contentTypeId = spot.getContentTypeId();
+            logger.debug("[TouristSpotService] 상세정보 저장 시도: contentId={}, contentTypeId={}", contentId, contentTypeId);
+            try {
+                String encodedApiKey = URLEncoder.encode(apiKey, StandardCharsets.UTF_8);
+                String urlStr = "https://apis.data.go.kr/B551011/KorService2/detailIntro2"
+                        + "?serviceKey=" + encodedApiKey
+                        + "&MobileOS=WEB"
+                        + "&MobileApp=SeniorWay"
+                        + "&contentId=" + contentId
+                        + "&contentTypeId=" + contentTypeId
+                        + "&_type=json";
+                logger.info("[TouristSpotService] 상세 API 호출: {}", urlStr);
+
+                BufferedReader br = null;
+                StringBuilder result = new StringBuilder();
+                try {
+                    URL url = new URL(urlStr);
+                    br = new BufferedReader(new InputStreamReader(url.openStream(), StandardCharsets.UTF_8));
+                    String line;
+                    while ((line = br.readLine()) != null) {
+                        result.append(line);
+                    }
+                    logger.debug("[TouristSpotService] 상세 API 응답 수신 성공: contentId={}, contentTypeId={}", contentId, contentTypeId);
+                } finally {
+                    if (br != null) try { br.close(); } catch (Exception ignore) {}
+                }
+
+                String response = result.toString();
+                JSONObject json = new JSONObject(response);
+                JSONObject body = json.getJSONObject("body");
+                JSONObject items = body.getJSONObject("items");
+                JSONObject detailItem;
+                if (items.optJSONArray("item") != null) {
+                    detailItem = items.getJSONArray("item").getJSONObject(0);
+                } else {
+                    detailItem = items.getJSONObject("item");
+                }
+                if (detailItem == null) {
+                    logger.warn("[TouristSpotService] 상세정보 없음: contentId={}, contentTypeId={}", contentId, contentTypeId);
+                    continue;
+                }
+
+                switch (contentTypeId) {
+                    case "12": // TouristAttraction
+                        logger.debug("[TouristSpotService] TouristAttractionDetailEntity 저장 시작: contentId={}", contentId);
+                        TouristAttractionDetailEntity ta = TouristAttractionDetailEntity.builder()
+                                .contentId(contentId)
+                                .contentTypeId(contentTypeId)
+                                .touristSpot(spot)
+                                .heritage1(detailItem.optString("heritage1", null))
+                                .heritage2(detailItem.optString("heritage2", null))
+                                .heritage3(detailItem.optString("heritage3", null))
+                                .infoCenter(detailItem.optString("infocenter", null))
+                                .openDate(detailItem.optString("opendate", null))
+                                .restDate(detailItem.optString("restdate", null))
+                                .expGuide(detailItem.optString("expguide", null))
+                                .expAgeRange(detailItem.optString("expagerange", null))
+                                .accomCount(detailItem.optString("accomcount", null))
+                                .useSeason(detailItem.optString("useseason", null))
+                                .useTime(detailItem.optString("usetime", null))
+                                .parkingAvailable(detailItem.optString("parking", null))
+                                .chkBabyCarriage(detailItem.optString("chkbabycarriage", null))
+                                .chkPet(detailItem.optString("chkpet", null))
+                                .chkCreditCard(detailItem.optString("chkcreditcard", null))
+                                .build();
+                        touristAttractionDetailRepository.save(ta);
+                        logger.info("[TouristSpotService] TouristAttractionDetailEntity 저장 완료: contentId={}", contentId);
+                        break;
+                    case "14": // PerformanceExhibition
+                        logger.debug("[TouristSpotService] PerformanceExhibitionDetailEntity 저장 시작: contentId={}", contentId);
+                        PerformanceExhibitionDetailEntity pe = PerformanceExhibitionDetailEntity.builder()
+                                .contentId(contentId)
+                                .contentTypeId(contentTypeId)
+                                .touristSpot(spot)
+                                .scale(detailItem.optString("scale", null))
+                                .useFee(detailItem.optString("usefee", null))
+                                .discountInfo(detailItem.optString("discountinfo", null))
+                                .spendTime(detailItem.optString("spendtime", null))
+                                .parkingFee(detailItem.optString("parkingfee", null))
+                                .infoCenter(detailItem.optString("infocenterculture", null))
+                                .accomCount(detailItem.optString("accomcountculture", null))
+                                .useTime(detailItem.optString("usetimeculture", null))
+                                .restDate(detailItem.optString("restdateculture", null))
+                                .parkingAvailable(detailItem.optString("parkingculture", null))
+                                .chkBabyCarriage(detailItem.optString("chkbabycarriageculture", null))
+                                .chkPet(detailItem.optString("chkpetculture", null))
+                                .chkCreditCard(detailItem.optString("chkcreditcardculture", null))
+                                .build();
+                        performanceExhibitionDetailRepository.save(pe);
+                        logger.info("[TouristSpotService] PerformanceExhibitionDetailEntity 저장 완료: contentId={}", contentId);
+                        break;
+                    case "28": // LeisureSports
+                        logger.debug("[TouristSpotService] LeisureSportsDetailEntity 저장 시작: contentId={}", contentId);
+                        LeisureSportsDetailEntity ls = LeisureSportsDetailEntity.builder()
+                                .contentId(contentId)
+                                .contentTypeId(contentTypeId)
+                                .touristSpot(spot)
+                                .openPeriod(detailItem.optString("openperiod", null))
+                                .reservationInfo(detailItem.optString("reservation", null))
+                                .infoCenter(detailItem.optString("infocenterleports", null))
+                                .scale(detailItem.optString("scaleleports", null))
+                                .accomCount(detailItem.optString("accomcountleports", null))
+                                .restDate(detailItem.optString("restdateleports", null))
+                                .useTime(detailItem.optString("usetimeleports", null))
+                                .useFee(detailItem.optString("usefeeleports", null))
+                                .expAgeRange(detailItem.optString("expagerangeleports", null))
+                                .parkingAvailable(detailItem.optString("parkingleports", null))
+                                .parkingFee(detailItem.optString("parkingfeeleports", null))
+                                .chkBabyCarriage(detailItem.optString("chkbabycarriageleports", null))
+                                .chkPet(detailItem.optString("chkpetleports", null))
+                                .chkCreditCard(detailItem.optString("chkcreditcardleports", null))
+                                .build();
+                        leisureSportsDetailRepository.save(ls);
+                        logger.info("[TouristSpotService] LeisureSportsDetailEntity 저장 완료: contentId={}", contentId);
+                        break;
+                    case "38": // Shopping
+                        logger.debug("[TouristSpotService] ShoppingDetailEntity 저장 시작: contentId={}", contentId);
+                        ShoppingDetailEntity sh = ShoppingDetailEntity.builder()
+                                .contentId(contentId)
+                                .contentTypeId(contentTypeId)
+                                .touristSpot(spot)
+                                .saleItem(detailItem.optString("saleitem", null))
+                                .saleItemCost(detailItem.optString("saleitemcost", null))
+                                .fairDay(detailItem.optString("fairday", null))
+                                .openDate(detailItem.optString("opendateshopping", null))
+                                .shopGuide(detailItem.optString("shopguide", null))
+                                .cultureCenter(detailItem.optString("culturecenter", null))
+                                .restroomAvailable(detailItem.optString("restroom", null))
+                                .infoCenter(detailItem.optString("infocentershopping", null))
+                                .scale(detailItem.optString("scaleshopping", null))
+                                .restDate(detailItem.optString("restdateshopping", null))
+                                .parkingAvailable(detailItem.optString("parkingshopping", null))
+                                .chkBabyCarriage(detailItem.optString("chkbabycarriageshopping", null))
+                                .chkPet(detailItem.optString("chkpetshopping", null))
+                                .chkCreditCard(detailItem.optString("chkcreditcardshopping", null))
+                                .openTime(detailItem.optString("opentime", null))
+                                .build();
+                        shoppingDetailRepository.save(sh);
+                        logger.info("[TouristSpotService] ShoppingDetailEntity 저장 완료: contentId={}", contentId);
+                        break;
+                    case "39": // Food
+                        logger.debug("[TouristSpotService] FoodDetailEntity 저장 시작: contentId={}", contentId);
+                        FoodDetailEntity fd = FoodDetailEntity.builder()
+                                .contentId(contentId)
+                                .contentTypeId(contentTypeId)
+                                .touristSpot(spot)
+                                .seatInfo(detailItem.optString("seat", null))
+                                .kidsFacility(detailItem.optString("kidsfacility", null))
+                                .firstMenu(detailItem.optString("firstmenu", null))
+                                .treatMenu(detailItem.optString("treatmenu", null))
+                                .smokingAllowed(detailItem.optString("smoking", null))
+                                .packingAvailable(detailItem.optString("packing", null))
+                                .infoCenter(detailItem.optString("infocenterfood", null))
+                                .scale(detailItem.optString("scalefood", null))
+                                .parkingAvailable(detailItem.optString("parkingfood", null))
+                                .build();
+                        foodDetailRepository.save(fd);
+                        logger.info("[TouristSpotService] FoodDetailEntity 저장 완료: contentId={}", contentId);
+                        break;
+                    default:
+                        logger.info("[TouristSpotService] 상세정보 저장 대상 아님: contentTypeId={}", contentTypeId);
+                }
+            } catch (Exception e) {
+                logger.error("[TouristSpotService] 상세정보 저장 실패: contentId={}, contentTypeId={}, error={}", contentId, contentTypeId, e.getMessage(), e);
+            }
+        }
+        logger.info("[TouristSpotService] 관광지 상세정보 저장 작업 완료");
     }
 }
