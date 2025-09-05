@@ -6,5 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface TouristAttractionDetailRepository extends JpaRepository<TouristAttractionDetailEntity, Integer> {
-    // ...custom query methods if needed...
+    boolean existsByContentId(String contentId);
 }

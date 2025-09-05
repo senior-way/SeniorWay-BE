@@ -67,19 +67,31 @@ public class TouristSpotService {
 
                 BufferedReader br = null;
                 StringBuilder result = new StringBuilder();
+                java.net.HttpURLConnection conn = null;
                 try {
                     URL url = new URL(urlStr);
-                    br = new BufferedReader(new InputStreamReader(url.openStream(), StandardCharsets.UTF_8));
-                    String line;
-                    while ((line = br.readLine()) != null) {
-                        result.append(line);
+                    conn = (java.net.HttpURLConnection) url.openConnection();
+                    conn.setRequestMethod("GET");
+                    conn.setConnectTimeout(10000);
+                    conn.setReadTimeout(10000);
+                    int responseCode = conn.getResponseCode();
+                    if (responseCode == java.net.HttpURLConnection.HTTP_OK) {
+                        br = new BufferedReader(new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8));
+                        String line;
+                        while ((line = br.readLine()) != null) {
+                            result.append(line);
+                        }
+                        logger.info("[TouristSpotService] API 응답 수신 성공 (pageNo={})", pageNo);
+                    } else {
+                        logger.error("[TouristSpotService] API 호출 실패: HTTP {}", responseCode);
+                        throw new RuntimeException("API 호출 실패: HTTP " + responseCode);
                     }
-                    logger.info("[TouristSpotService] API 응답 수신 성공 (pageNo={})", pageNo);
                 } catch (Exception e) {
                     logger.error("[TouristSpotService] API 호출 실패: url={}, error={}", urlStr, e.getMessage(), e);
                     throw e;
                 } finally {
                     if (br != null) try { br.close(); } catch (Exception ignore) {}
+                    if (conn != null) conn.disconnect();
                 }
 
                 String response = result.toString();
@@ -186,9 +198,39 @@ public class TouristSpotService {
     public void fetchAndSaveTouristSpotDetails() {
         var spots = touristSpotRepository.findAll();
         logger.info("[TouristSpotService] 관광지 상세정보 저장 시작. 대상 관광지 수: {}", spots.size());
+        int maxCount = 1000;
+        int processed = 0;
         for (TouristSpotEntity spot : spots) {
+            if (processed >= maxCount) break;
             String contentId = spot.getContentId();
             String contentTypeId = spot.getContentTypeId();
+
+            // 이미 상세정보가 저장되어 있으면 건너뜀
+            boolean alreadyExists = false;
+            switch (contentTypeId) {
+                case "12":
+                    alreadyExists = touristAttractionDetailRepository.existsByContentId(contentId);
+                    break;
+                case "14":
+                    alreadyExists = performanceExhibitionDetailRepository.existsByContentId(contentId);
+                    break;
+                case "28":
+                    alreadyExists = leisureSportsDetailRepository.existsByContentId(contentId);
+                    break;
+                case "38":
+                    alreadyExists = shoppingDetailRepository.existsByContentId(contentId);
+                    break;
+                case "39":
+                    alreadyExists = foodDetailRepository.existsByContentId(contentId);
+                    break;
+                default:
+                    alreadyExists = true; // 상세 저장 대상이 아니면 건너뜀
+            }
+            if (alreadyExists) {
+                logger.info("[TouristSpotService] 이미 상세정보가 저장된 contentId={}, contentTypeId={}", contentId, contentTypeId);
+                continue;
+            }
+
             logger.debug("[TouristSpotService] 상세정보 저장 시도: contentId={}, contentTypeId={}", contentId, contentTypeId);
             try {
                 String encodedApiKey = URLEncoder.encode(apiKey, StandardCharsets.UTF_8);
@@ -203,22 +245,57 @@ public class TouristSpotService {
 
                 BufferedReader br = null;
                 StringBuilder result = new StringBuilder();
+                java.net.HttpURLConnection conn = null;
                 try {
                     URL url = new URL(urlStr);
-                    br = new BufferedReader(new InputStreamReader(url.openStream(), StandardCharsets.UTF_8));
-                    String line;
-                    while ((line = br.readLine()) != null) {
-                        result.append(line);
+                    conn = (java.net.HttpURLConnection) url.openConnection();
+                    conn.setRequestMethod("GET");
+                    conn.setConnectTimeout(10000);
+                    conn.setReadTimeout(10000);
+                    int responseCode = conn.getResponseCode();
+                    if (responseCode == java.net.HttpURLConnection.HTTP_OK) {
+                        br = new BufferedReader(new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8));
+                        String line;
+                        while ((line = br.readLine()) != null) {
+                            result.append(line);
+                        }
+                        logger.debug("[TouristSpotService] 상세 API 응답 수신 성공: contentId={}, contentTypeId={}", contentId, contentTypeId);
+                    } else {
+                        logger.error("[TouristSpotService] 상세 API 호출 실패: HTTP {}", responseCode);
+                        throw new RuntimeException("상세 API 호출 실패: HTTP " + responseCode);
                     }
-                    logger.debug("[TouristSpotService] 상세 API 응답 수신 성공: contentId={}, contentTypeId={}", contentId, contentTypeId);
                 } finally {
                     if (br != null) try { br.close(); } catch (Exception ignore) {}
+                    if (conn != null) conn.disconnect();
                 }
 
                 String response = result.toString();
                 JSONObject json = new JSONObject(response);
+
+                // body가 없을 경우 예외 처리
+                if (!json.has("body") && json.has("response")) {
+                    JSONObject responseObj = json.getJSONObject("response");
+                    if (!responseObj.has("body")) {
+                        logger.warn("[TouristSpotService] 상세정보 응답에 body 없음: contentId={}, contentTypeId={}", contentId, contentTypeId);
+                        continue;
+                    }
+                    json = responseObj;
+                }
+                if (!json.has("body")) {
+                    logger.warn("[TouristSpotService] 상세정보 응답에 body 없음(최종): contentId={}, contentTypeId={}", contentId, contentTypeId);
+                    continue;
+                }
+
                 JSONObject body = json.getJSONObject("body");
+                if (!body.has("items")) {
+                    logger.warn("[TouristSpotService] 상세정보 응답에 items 없음: contentId={}, contentTypeId={}", contentId, contentTypeId);
+                    continue;
+                }
                 JSONObject items = body.getJSONObject("items");
+                if (!items.has("item")) {
+                    logger.warn("[TouristSpotService] 상세정보 응답에 item 없음: contentId={}, contentTypeId={}", contentId, contentTypeId);
+                    continue;
+                }
                 JSONObject detailItem;
                 if (items.optJSONArray("item") != null) {
                     detailItem = items.getJSONArray("item").getJSONObject(0);
@@ -353,6 +430,7 @@ public class TouristSpotService {
             } catch (Exception e) {
                 logger.error("[TouristSpotService] 상세정보 저장 실패: contentId={}, contentTypeId={}, error={}", contentId, contentTypeId, e.getMessage(), e);
             }
+            processed++;
         }
         logger.info("[TouristSpotService] 관광지 상세정보 저장 작업 완료");
     }

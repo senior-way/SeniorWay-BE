@@ -6,5 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface PerformanceExhibitionDetailRepository extends JpaRepository<PerformanceExhibitionDetailEntity, Integer> {
-    // ...custom query methods if needed...
+    boolean existsByContentId(String contentId);
 }

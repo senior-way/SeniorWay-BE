@@ -6,5 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface LeisureSportsDetailRepository extends JpaRepository<LeisureSportsDetailEntity, Integer> {
-    // ...custom query methods if needed...
+    boolean existsByContentId(String contentId);
 }

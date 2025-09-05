@@ -6,5 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface ShoppingDetailRepository extends JpaRepository<ShoppingDetailEntity, Integer> {
-    // ...custom query methods if needed...
+    boolean existsByContentId(String contentId);
 }
