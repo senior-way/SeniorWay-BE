@@ -18,6 +18,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -61,12 +62,17 @@ public class AuthService implements UserDetailsService {
     }
 
     /**
-     * 회원가입 요청 처리
-     * 주어진 signUp DTO를 바탕으로 이메일 중복 여부 체크
-     * 비밀번호를 암호화 하여 User Entity를 생성 후 DB 에 저장
-     * @param userSignUpRequestsDto 회원가입용 User 정보
-     * @return 저장된 User Entity
-     * @throws IllegalArgumentException 이메일이 존재할 경우 예외 발생
+     * 회원가입 요청을 처리하는 메서드
+     *
+     * <p>
+     *     전달받은 사용자 정보를 기반으로 새로운 사용자를 생성하고 저장
+     *     이메일이 이미 존재하는 경우 예외를 발생시킴
+     *     성공적으로 저장된 사용자의 ID, 이메일, 권한을 포함하는 JWT 토큰을 반환
+     * </p>
+     *
+     * @param userSignUpRequestsDto 회원가입 요청 DTO (이메일, 비밀번호, 사용자명 포함)
+     * @return 생성된 사용자의 JWT 토큰
+     * @throws CustomException 이메일이 이미 존재하는 경우
      */
     public String signUp(UserSignUpRequestsDTO userSignUpRequestsDto) {
         String email = userSignUpRequestsDto.getEmail().toLowerCase(); // 소문자 통일
@@ -79,7 +85,7 @@ public class AuthService implements UserDetailsService {
                 .username(userSignUpRequestsDto.getUsername())
                 .email(email) // 소문자로 변환된 email을 저장
                 .password(passwordEncoder.encode(userSignUpRequestsDto.getPassword()))
-                .role(Role.USER)
+                .role(Role.USER)  // TODO: 기본 권한 USER로 설정, 추후 변경 필요
                 .build();
 
         User savedUser = userRepository.save(user);
@@ -100,8 +106,8 @@ public class AuthService implements UserDetailsService {
      * @throws UsernameNotFoundException 사용자를 찾을 수 없는 경우
      * @throws IllegalArgumentException 비밀번호가 틀린 경우
      */
-    public UserLoginResponseDTO login(UserLoginRequestsDTO userLoginRequestsDto) {
-        String email = userLoginRequestsDto.getEmail().toLowerCase(); // 소문자 통일
+    public Map<String, String> login(UserLoginRequestsDTO userLoginRequestsDto) {
+        String email = userLoginRequestsDto.getEmail().toLowerCase();
 
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다."));
@@ -110,8 +116,15 @@ public class AuthService implements UserDetailsService {
             throw new CustomException(ErrorCode.INVALID_PASSWORD);
         }
 
+        // 토큰 생성
         String accessToken = jwtTokenProvider.createToken(user.getId(), user.getEmail(), user.getRole());
-        return new UserLoginResponseDTO(accessToken, user.getId());
+        String refreshToken = jwtTokenProvider.createRefreshToken(user.getId());
+
+        // 반환: accessToken + refreshToken
+        return Map.of(
+                "accessToken", accessToken,
+                "refreshToken", refreshToken
+        );
     }
 
 

@@ -3,7 +3,6 @@ package com.seniorway.seniorway.controller.auth;
 import com.seniorway.seniorway.enums.user.Role;
 import com.seniorway.seniorway.jwt.JwtTokenProvider;
 import com.seniorway.seniorway.dto.auth.UserLoginRequestsDTO;
-import com.seniorway.seniorway.dto.auth.UserLoginResponseDTO;
 import com.seniorway.seniorway.dto.auth.UserSignUpRequestsDTO;
 import com.seniorway.seniorway.service.auth.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -26,23 +25,27 @@ public class AuthController {
     private final AuthService authService;
     private final JwtTokenProvider jwtTokenProvider;
 
+    /**
+     * 로그인 요청을 처리하고, 성공 시 액세스 토큰과 리프레시 토큰을 반환
+     * 리프레시 토큰은 HttpOnly 쿠키로 설정되어 클라이언트에 전달
+     *
+     * @param loginRequest 사용자 로그인 요청 데이터 (이메일, 비밀번호)
+     * @return 액세스 토큰과 리프레시 토큰이 포함된 응답
+     */
     @PostMapping("/login")
-    public ResponseEntity<String> login(@RequestBody @Valid UserLoginRequestsDTO userLoginRequest) {
-        UserLoginResponseDTO userLoginResponseDTO = authService.login(userLoginRequest);
-        String refreshToken = jwtTokenProvider.createRefreshToken(userLoginResponseDTO.getUserId());
+    public ResponseEntity<Map<String, String>> login(@RequestBody @Valid UserLoginRequestsDTO loginRequest) {
+        Map<String, String> tokens = authService.login(loginRequest);
 
-        ResponseCookie refreshTokenCookie = ResponseCookie
-                .from("refreshToken", refreshToken)
+        // refreshToken 쿠키 설정
+        ResponseCookie refreshTokenCookie = ResponseCookie.from("refreshToken", tokens.get("refreshToken"))
                 .httpOnly(true)
                 .path("/")
                 .maxAge(Duration.ofDays(7))
                 .build();
 
-        Map<String, String> responseBody = Map.of("accessToken", refreshToken);
-
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString())
-                .body(responseBody.toString());
+                .body(tokens);
     }
 
     @PostMapping("/signup")

@@ -1,6 +1,7 @@
 package com.seniorway.seniorway.service.location;
 
 import com.seniorway.seniorway.dto.location.LocationMessage;
+import com.seniorway.seniorway.enums.user.Role;
 import com.seniorway.seniorway.security.CustomUserDetails;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,7 +30,7 @@ class LocationServiceImplIntegrationTest {
         locationMessage.setLongitude(126.9780);
 
         CustomUserDetails userDetails =
-                new CustomUserDetails(1L, "user@test.com", "password", "USER", null);
+                new CustomUserDetails(1L, "user@test.com", Role.USER, null);
 
         // when
         locationService.handleLocation(locationMessage, userDetails);
