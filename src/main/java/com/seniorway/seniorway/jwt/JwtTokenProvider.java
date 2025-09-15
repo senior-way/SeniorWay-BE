@@ -2,6 +2,7 @@ package com.seniorway.seniorway.jwt;
 
 import com.seniorway.seniorway.dto.auth.AuthUserDTO;
 import com.seniorway.seniorway.enums.user.Role;
+import com.seniorway.seniorway.security.CustomUserDetails;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
@@ -14,7 +15,6 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
-import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Date;
 import java.util.List;
@@ -220,7 +220,8 @@ public class JwtTokenProvider {
      * @return 인증 정보를 담은 {@link Authentication} 객체
      */
     public Authentication getAuthentication(String token) {
-        Claims claims = Jwts.parserBuilder().setSigningKey(key)
+        Claims claims = Jwts.parserBuilder()
+                .setSigningKey(key)
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
@@ -229,16 +230,14 @@ public class JwtTokenProvider {
         String email = claims.get("email", String.class);
         Role roleEnum = Role.valueOf(claims.get("role", String.class));
 
-        List<SimpleGrantedAuthority> authorities = new ArrayList<>();
-        authorities.add(new SimpleGrantedAuthority("ROLE_" + roleEnum.getKey()));
+        List<SimpleGrantedAuthority> authorities = List.of(new SimpleGrantedAuthority(roleEnum.getKey()));
 
-        AuthUserDTO authUserDTO = AuthUserDTO.builder()
-                .userId(userId)
-                .email(email)
-                .role(roleEnum)
-                .build();
-        return new UsernamePasswordAuthenticationToken(authUserDTO, token, authorities);
+        // AuthUserDTO 대신 CustomUserDetails 사용
+        CustomUserDetails userDetails = new CustomUserDetails(userId, email, roleEnum, authorities);
+
+        return new UsernamePasswordAuthenticationToken(userDetails, token, authorities);
     }
+
 
     /**
      * 요청에서 JWT 토근을 추출
