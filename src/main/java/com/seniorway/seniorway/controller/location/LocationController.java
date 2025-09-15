@@ -7,10 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -56,5 +53,22 @@ public class LocationController {
         msg.setUserId(userDetails.getUserId());
         locationService.handleLocation(msg, userDetails);
         return ResponseEntity.ok().build();
+    }
+
+    /**
+     * 보호된 사용자의 최근 위치를 가져옵니다.
+     * 로그인한 보호자(Guardian)의 ID를 사용하여, 해당 보호자가 관리하는
+     * 피보호자의 최근 위치를 조회합니다.
+     *
+     * @param userDetails 보호자(Guardian)의 사용자 정보
+     * @return 보호된 사용자의 최근 위치를 담은 LocationMessage
+     */
+    @GetMapping("/protected")
+    public ResponseEntity<LocationMessage> getProtectedUserLocation(
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        LocationMessage location = locationService.getProtectedUserLastLocation(userDetails.getUserId());
+        if(location == null) return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(location);
     }
 }
