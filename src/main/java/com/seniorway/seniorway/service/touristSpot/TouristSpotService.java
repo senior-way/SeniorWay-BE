@@ -198,10 +198,10 @@ public class TouristSpotService {
     public void fetchAndSaveTouristSpotDetails() {
         var spots = touristSpotRepository.findAll();
         logger.info("[TouristSpotService] 관광지 상세정보 저장 시작. 대상 관광지 수: {}", spots.size());
-        int maxCount = 1000;
-        int processed = 0;
+        int maxApiCalls = 1000;
+        int apiCallCount = 0;
         for (TouristSpotEntity spot : spots) {
-            if (processed >= maxCount) break;
+            if (apiCallCount >= maxApiCalls) break;
             String contentId = spot.getContentId();
             String contentTypeId = spot.getContentTypeId();
 
@@ -268,6 +268,8 @@ public class TouristSpotService {
                     if (br != null) try { br.close(); } catch (Exception ignore) {}
                     if (conn != null) conn.disconnect();
                 }
+
+                apiCallCount++; // 실제 API 호출이 성공적으로 끝난 경우에만 증가
 
                 String response = result.toString();
                 JSONObject json = new JSONObject(response);
@@ -430,7 +432,6 @@ public class TouristSpotService {
             } catch (Exception e) {
                 logger.error("[TouristSpotService] 상세정보 저장 실패: contentId={}, contentTypeId={}, error={}", contentId, contentTypeId, e.getMessage(), e);
             }
-            processed++;
         }
         logger.info("[TouristSpotService] 관광지 상세정보 저장 작업 완료");
     }

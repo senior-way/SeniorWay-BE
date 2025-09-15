@@ -37,7 +37,7 @@ public class TouristAttractionDetailEntity {
     @Column(length = 50)
     private String openDate;
 
-    @Column(length = 50)
+    @Column(length = 200)
     private String restDate;
 
     @Lob
@@ -46,16 +46,16 @@ public class TouristAttractionDetailEntity {
     @Column(length = 50)
     private String expAgeRange;
 
-    @Column(length = 20)
+    @Column(length = 400)
     private String accomCount;
 
     @Column(length = 50)
     private String useSeason;
 
-    @Column(length = 50)
+    @Column(length = 200)
     private String useTime;
 
-    @Column(length = 100)
+    @Column(length = 200)
     private String parkingAvailable;
 
     @Column(length = 10)
