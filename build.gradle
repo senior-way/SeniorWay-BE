@@ -51,11 +51,11 @@ dependencies {
 //	implementation("ch.qos.logback:logback-classic:1.4.14")
 
 	compileOnly 'org.projectlombok:lombok'
-	runtimeOnly 'com.h2database:h2'
+	runtimeOnly 'com.h2database:h2' // 개발/테스트용 DB (필요시 주석 처리)
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.security:spring-security-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-	runtimeOnly("com.h2database:h2")  // 개발/테스트용 DB
+	runtimeOnly("com.h2database:h2")  // 개발/테스트용 DB (필요시 주석 처리)
 	implementation 'org.json:json:20230227'
 
 	// swagger
@@ -76,6 +76,8 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-data-redis-reactive' // 선택, Reactive 사용 시
 	implementation 'io.lettuce:lettuce-core' // Redis client
 
+	runtimeOnly 'mysql:mysql-connector-java' // MySQL RDS 연결용 드라이버 추가
+	implementation 'com.mysql:mysql-connector-j:8.1.0'
 }
 
 tasks.named('test') {

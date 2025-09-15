@@ -21,5 +21,14 @@ public class TouristSpotController {
             return ResponseEntity.status(500).body("관광지 정보 저장 중 오류 발생");
         }
     }
-}
 
+    @PostMapping("/update-detail")
+    public ResponseEntity<?> updateTouristSpotDetails() {
+        try {
+            touristSpotService.fetchAndSaveTouristSpotDetails();
+            return ResponseEntity.ok("관광지 상세정보가 성공적으로 저장되었습니다.");
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("관광지 상세정보 저장 중 오류 발생");
+        }
+    }
+}
