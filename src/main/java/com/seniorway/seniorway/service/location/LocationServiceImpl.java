@@ -1,9 +1,15 @@
 package com.seniorway.seniorway.service.location;
 
+import com.seniorway.seniorway.converter.location.LocationConverter;
 import com.seniorway.seniorway.dto.location.LocationMessage;
 import com.seniorway.seniorway.entity.location.UserLocation;
+import com.seniorway.seniorway.entity.user.User;
+import com.seniorway.seniorway.entity.user.UserGuardianLinkEntity;
+import com.seniorway.seniorway.enums.error.ErrorCode;
 import com.seniorway.seniorway.event.location.LocationSavedEvent;
+import com.seniorway.seniorway.exception.CustomException;
 import com.seniorway.seniorway.repository.location.UserLocationRepository;
+import com.seniorway.seniorway.repository.user.UserGuardianLinkRepository;
 import com.seniorway.seniorway.security.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
@@ -12,6 +18,8 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -21,6 +29,7 @@ public class LocationServiceImpl implements LocationService {
     private final StringRedisTemplate redisTemplate;
     private final ApplicationEventPublisher applicationEventPublisher;
     private final UserLocationRepository userLocationRepository;
+    private final UserGuardianLinkRepository userGuardianLinkRepository;
 
     @Override
     public void handleLocation(LocationMessage msg, CustomUserDetails userDetails) {
@@ -56,5 +65,14 @@ public class LocationServiceImpl implements LocationService {
     private void sendLocationToGuardian(LocationMessage msg) {
         String destination = "/topic/location/" + msg.getUserId();
         messagingTemplate.convertAndSend(destination, msg);
+    }
+
+    @Override
+    public LocationMessage getProtectedUserLastLocation(Long guardianId) {
+        return userGuardianLinkRepository.findByGuardianId(guardianId)
+                .stream()
+                .findFirst().flatMap(link -> userLocationRepository.findTopByUserIdOrderByTimestampDesc(link.getUser().getId())
+                        .map(LocationConverter::toDto))
+                .orElse(null);
     }
 }

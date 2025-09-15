@@ -13,4 +13,12 @@ public interface LocationService {
      * @param userDetails 사용자 ID, 이메일, 역할을 포함한 사용자 상세 정보
      */
     void handleLocation(LocationMessage msg, CustomUserDetails userDetails);
+
+    /**
+     * 보호된 사용자의 최근 위치 목록을 가져옵니다.
+     *
+     * @param guardianId 보호자(Guardian)의 사용자 ID
+     * @return 보호된 사용자의 최근 위치 목록을 포함하는 LocationMessage 객체
+     */
+    LocationMessage getProtectedUserLastLocation(Long guardianId);
 }
