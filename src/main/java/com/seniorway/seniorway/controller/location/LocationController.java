@@ -68,7 +68,10 @@ public class LocationController {
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
         LocationMessage location = locationService.getProtectedUserLastLocation(userDetails.getUserId());
-        if(location == null) return ResponseEntity.noContent().build();
+        if (location == null) {
+            // location = new LocationMessage(3L, 37.44, 126.88, null);
+            return ResponseEntity.noContent().build();
+        }
         return ResponseEntity.ok(location);
     }
 }
