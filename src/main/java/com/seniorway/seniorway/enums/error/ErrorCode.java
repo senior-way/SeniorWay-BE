@@ -20,6 +20,7 @@ public enum ErrorCode {
     MATCHING_USER_EMPTY(HttpStatus.BAD_REQUEST, "매칭할 유저를 조회하지 못하였습니다."),
     SCORE_EMPTY(HttpStatus.BAD_REQUEST, "점수를 조회하지 못하였습니다."),
     NO_GUARDIAN_LINK(HttpStatus.BAD_REQUEST, "연결된 보호자가 없습니다."),
+    NO_LOCATION_DATA(HttpStatus.BAD_REQUEST, "해당 위치 데이터가 존재하지 않습니다."),
     HTTP_REQUEST_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "외부 API 요청 실패"),
 
     // 401 Unauthorized
