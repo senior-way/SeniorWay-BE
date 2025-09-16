@@ -51,4 +51,18 @@ public class TouristSpotController {
             return ResponseEntity.status(500).body("반려동물 여행정보 저장 중 오류 발생");
         }
     }
+
+    @GetMapping("/detail/{contentId}")
+    public ResponseEntity<?> getTouristSpotDetail(@PathVariable String contentId) {
+        try {
+            var spot = touristSpotService.findTouristSpotByContentId(contentId);
+            if (spot == null) {
+                return ResponseEntity.status(404).body("해당 contentId의 관광지 정보가 없습니다.");
+            }
+            var detailDto = touristSpotService.getTouristSpotDetailDto(contentId, spot.getContentTypeId());
+            return ResponseEntity.ok(detailDto);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("상세정보 조회 중 오류 발생");
+        }
+    }
 }

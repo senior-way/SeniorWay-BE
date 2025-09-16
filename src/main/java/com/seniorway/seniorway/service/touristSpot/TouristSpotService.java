@@ -457,7 +457,16 @@ public class TouristSpotService {
             if (!("12".equals(contentTypeId) || "28".equals(contentTypeId) || "38".equals(contentTypeId) || "39".equals(contentTypeId))) continue;
             String contentId = spot.getContentId();
             if (wheelchairAccessRepository.existsByContentId(contentId)) {
-                logger.info("[TouristSpotService] 이미 무장애 정보가 저장된 contentId={}", contentId);
+                // 이미 저장된 경우 exitInfo 값으로 isBarierFree만 판별/수정
+                WheelchairAccessEntity entity = wheelchairAccessRepository.findByContentId(contentId);
+                boolean isBarierFree = entity.getExitInfo() != null && !entity.getExitInfo().isBlank();
+                if (entity.isBarierFree() != isBarierFree) {
+                    entity.setBarierFree(isBarierFree);
+                    wheelchairAccessRepository.save(entity);
+                    logger.info("[TouristSpotService] 무장애 정보 isBarierFree 컬럼만 수정: contentId={}, isBarierFree={}", contentId, isBarierFree);
+                } else {
+                    logger.info("[TouristSpotService] 이미 무장애 정보가 저장되어 있고 isBarierFree도 일치: contentId={}", contentId);
+                }
                 continue;
             }
             try {
@@ -520,12 +529,14 @@ public class TouristSpotService {
                 entity.setContentId(contentId);
                 entity.setParking(item.optString("parking", null));
                 entity.setRoute(item.optString("route", null));
-                entity.setExitInfo(item.optString("exit", null));
+                String exitInfo = item.optString("exit", null);
+                entity.setExitInfo(exitInfo);
                 entity.setElevator(item.optString("elevator", null));
                 entity.setRestroom(item.optString("restroom", null));
+                entity.setBarierFree(exitInfo != null && !exitInfo.isBlank());
                 wheelchairAccessRepository.save(entity);
                 savedCount++;
-                logger.info("[TouristSpotService] 무장애 정보 저장 완료: contentId={}", contentId);
+                logger.info("[TouristSpotService] 무장애 정보 저장 완료: contentId={}, isBarierFree={}", contentId, entity.isBarierFree());
             } catch (Exception e) {
                 logger.error("[TouristSpotService] 무장애 정보 저장 실패: contentId={}, error={}", spot.getContentId(), e.getMessage(), e);
             }
@@ -623,5 +634,81 @@ public class TouristSpotService {
             }
         }
         logger.info("[TouristSpotService] 반려동물 여행정보 저장 완료. 저장 건수: {}", savedCount);
+    }
+
+    public TouristSpotEntity findTouristSpotByContentId(String contentId) {
+        return touristSpotRepository.findByContentId(contentId);
+    }
+
+    public Object getTouristSpotDetailDto(String contentId, String contentTypeId) {
+        TouristSpotEntity spot = touristSpotRepository.findByContentId(contentId);
+        if (spot == null) return null;
+
+        JSONObject result = new JSONObject();
+        result.put("spot", spot);
+
+        // 상세정보(spot 필드 제거)
+        Object detail = null;
+        switch (contentTypeId) {
+            case "12":
+                var ta = touristAttractionDetailRepository.findByContentId(contentId);
+                if (ta != null) {
+                    JSONObject detailJson = new JSONObject(ta);
+                    detailJson.remove("touristSpot");
+                    detail = detailJson.toMap();
+                }
+                break;
+            case "14":
+                var pe = performanceExhibitionDetailRepository.findByContentId(contentId);
+                if (pe != null) {
+                    JSONObject detailJson = new JSONObject(pe);
+                    detailJson.remove("touristSpot");
+                    detail = detailJson.toMap();
+                }
+                break;
+            case "28":
+                var ls = leisureSportsDetailRepository.findByContentId(contentId);
+                if (ls != null) {
+                    JSONObject detailJson = new JSONObject(ls);
+                    detailJson.remove("touristSpot");
+                    detail = detailJson.toMap();
+                }
+                break;
+            case "38":
+                var sh = shoppingDetailRepository.findByContentId(contentId);
+                if (sh != null) {
+                    JSONObject detailJson = new JSONObject(sh);
+                    detailJson.remove("touristSpot");
+                    detail = detailJson.toMap();
+                }
+                break;
+            case "39":
+                var fd = foodDetailRepository.findByContentId(contentId);
+                if (fd != null) {
+                    JSONObject detailJson = new JSONObject(fd);
+                    detailJson.remove("touristSpot");
+                    detail = detailJson.toMap();
+                }
+                break;
+            default:
+                break;
+        }
+        if (detail != null) result.put("detail", detail);
+
+        // 무장애 정보
+        WheelchairAccessEntity wheelchair = wheelchairAccessRepository.findByContentId(contentId);
+        if (wheelchair != null && wheelchair.isBarierFree()) {
+            result.put("wheelchairAccess", wheelchair);
+        }
+
+        // 반려동물 정보
+        PetFriendlyEntity pet = petFriendlyInfoRepository.existsByContentId(contentId)
+                ? petFriendlyInfoRepository.findByContentId(contentId)
+                : null;
+        if (pet != null) {
+            result.put("petFriendly", pet);
+        }
+
+        return result.toMap();
     }
 }

@@ -7,4 +7,6 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface PerformanceExhibitionDetailRepository extends JpaRepository<PerformanceExhibitionDetailEntity, Integer> {
     boolean existsByContentId(String contentId);
+
+    PerformanceExhibitionDetailEntity findByContentId(String contentId);
 }

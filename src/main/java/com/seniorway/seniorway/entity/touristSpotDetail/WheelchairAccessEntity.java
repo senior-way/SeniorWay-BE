@@ -29,6 +29,9 @@ public class WheelchairAccessEntity extends BaseTimeEntity {
     @Column(name = "restroom", length = 100)
     private String restroom;
 
+    @Column(name = "is_barier_free", nullable = false)
+    private boolean isBarierFree = false;
+
     public Long getId() {
         return id;
     }
@@ -83,5 +86,13 @@ public class WheelchairAccessEntity extends BaseTimeEntity {
 
     public void setRestroom(String restroom) {
         this.restroom = restroom;
+    }
+
+    public boolean isBarierFree() {
+        return isBarierFree;
+    }
+
+    public void setBarierFree(boolean barierFree) {
+        isBarierFree = barierFree;
     }
 }
