@@ -28,4 +28,11 @@ public class AlarmController {
         alarmService.sendTestMail(toEmail);
         return ResponseEntity.ok("테스트 메일을 전송하였습니다.");
     }
+
+    @PostMapping("/guardian/invite")
+    public ResponseEntity<?> invite(@RequestParam Long wardUserId,
+                                    @RequestParam String guardianEmail) {
+        alarmService.sendInvite(wardUserId, guardianEmail); // 토큰 생성 + 메일 발송
+        return ResponseEntity.ok("초대 메일을 전송하였습니다.");
+    }
 }
