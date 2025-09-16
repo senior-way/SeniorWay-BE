@@ -20,7 +20,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     // 필터에서 토큰 검사 없이 통과시킬 URL 리스트 (예: 로그인, 카카오 인증 경로)
     private static final List<String> EXCLUDE_URLS = List.of(
             "/api/auth/kakao",
-            "/api/auth/login"
+            "/api/auth/login",
+            "/api/auth/signup"
     );
 
     // JWT 토큰 생성, 검증, 인증정보 추출을 담당하는 프로바이더
@@ -48,6 +49,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
+
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+            chain.doFilter(request, response);
+            return;
+        }
+
         try {
             // 1. HTTP 요청 헤더에서 토큰을 추출한다.
             String token = jwtTokenProvider.resolveToken(request);

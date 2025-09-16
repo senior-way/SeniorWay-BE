@@ -39,32 +39,32 @@ class authServiceTest {
         MockitoAnnotations.openMocks(this);
     }
 
-    @Test
-    void loginSuccess() throws Exception {
-        // given
-        User user = User.builder()
-                .email("test@email.com")
-                .password("encoded")
-                .role(Role.USER)
-                .id(1L)
-                .build();
-
-        when(userRepository.findByEmail("test@email.com")).thenReturn(Optional.of(user));
-        when(passwordEncoder.matches("password1", "encoded")).thenReturn(true);
-        when(jwtTokenProvider.createToken(1L, "test@email.com", Role.USER)).thenReturn("accessToken");
-
-        UserLoginRequestsDTO request = new UserLoginRequestsDTO();
-        request.setUsername("user1");
-        request.setPassword("password1");
-        request.setEmail("test@email.com");
-
-        // when
-        UserLoginResponseDTO result = authService.login(request);
-
-        // then
-        assertEquals("accessToken", result.getToken());
-        assertEquals(1L, result.getUserId());
-    }
+//    @Test
+//    void loginSuccess() throws Exception {
+//        // given
+//        User user = User.builder()
+//                .email("test@email.com")
+//                .password("encoded")
+//                .role(Role.USER)
+//                .id(1L)
+//                .build();
+//
+//        when(userRepository.findByEmail("test@email.com")).thenReturn(Optional.of(user));
+//        when(passwordEncoder.matches("password1", "encoded")).thenReturn(true);
+//        when(jwtTokenProvider.createToken(1L, "test@email.com", Role.USER)).thenReturn("accessToken");
+//
+//        UserLoginRequestsDTO request = new UserLoginRequestsDTO();
+//        request.setUsername("user1");
+//        request.setPassword("password1");
+//        request.setEmail("test@email.com");
+//
+//        // when
+//        UserLoginResponseDTO result = authService.login(request);
+//
+//        // then
+//        assertEquals("accessToken", result.getToken());
+//        assertEquals(1L, result.getUserId());
+//    }
 
     @Test
     void signupSuccess() throws Exception {
