@@ -446,14 +446,15 @@ public class TouristSpotService {
     }
 
     /**
-     * 무장애 여행정보 저장 (contentTypeId=12만)
+     * 무장애 여행정보 저장 (contentTypeId=12,28,38,39)
      */
     public void fetchAndSaveWheelchairAccessInfo() {
         var spots = touristSpotRepository.findAll();
         logger.info("[TouristSpotService] 무장애 여행정보 저장 시작. 대상 관광지 수: {}", spots.size());
         int savedCount = 0;
         for (TouristSpotEntity spot : spots) {
-            if (!"12".equals(spot.getContentTypeId())) continue;
+            String contentTypeId = spot.getContentTypeId();
+            if (!("12".equals(contentTypeId) || "28".equals(contentTypeId) || "38".equals(contentTypeId) || "39".equals(contentTypeId))) continue;
             String contentId = spot.getContentId();
             if (wheelchairAccessRepository.existsByContentId(contentId)) {
                 logger.info("[TouristSpotService] 이미 무장애 정보가 저장된 contentId={}", contentId);
@@ -533,14 +534,15 @@ public class TouristSpotService {
     }
 
     /**
-     * 반려동물 여행정보 저장 (contentTypeId=12만)
+     * 반려동물 여행정보 저장 (contentTypeId=12,28,38,39)
      */
     public void fetchAndSavePetFriendlyInfo() {
         var spots = touristSpotRepository.findAll();
         logger.info("[TouristSpotService] 반려동물 여행정보 저장 시작. 대상 관광지 수: {}", spots.size());
         int savedCount = 0;
         for (TouristSpotEntity spot : spots) {
-            if (!"12".equals(spot.getContentTypeId())) continue;
+            String contentTypeId = spot.getContentTypeId();
+            if (!("12".equals(contentTypeId) || "28".equals(contentTypeId) || "38".equals(contentTypeId) || "39".equals(contentTypeId))) continue;
             String contentId = spot.getContentId();
             if (petFriendlyInfoRepository.existsByContentId(contentId)) {
                 logger.info("[TouristSpotService] 이미 반려동물 정보가 저장된 contentId={}", contentId);
