@@ -85,6 +85,7 @@ public class AuthService implements UserDetailsService {
                 .username(userSignUpRequestsDto.getUsername())
                 .email(email) // 소문자로 변환된 email을 저장
                 .password(passwordEncoder.encode(userSignUpRequestsDto.getPassword()))
+                .birth(userSignUpRequestsDto.getBirth())
                 .role(Role.USER)
                 .build();
 
