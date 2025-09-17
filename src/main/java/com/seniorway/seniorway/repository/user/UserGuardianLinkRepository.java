@@ -10,5 +10,7 @@ import java.util.List;
 public interface UserGuardianLinkRepository extends JpaRepository<UserGuardianLinkEntity, Long> {
     List<UserGuardianLinkEntity> findByUserId(Long userId);
     List<UserGuardianLinkEntity> findByGuardianId(Long guardianId);
+
+    boolean existsByUser_IdAndGuardian_Id(Long userId, Long guardianId);
 }
 

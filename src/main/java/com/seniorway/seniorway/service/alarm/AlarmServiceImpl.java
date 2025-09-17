@@ -9,6 +9,8 @@ import com.seniorway.seniorway.repository.location.UserLocationRepository;
 import com.seniorway.seniorway.repository.schedule.ScheduleRepository;
 import com.seniorway.seniorway.repository.schedule.ScheduleTouristSpotRepository;
 import com.seniorway.seniorway.repository.user.UserGuardianLinkRepository;
+import com.seniorway.seniorway.repository.user.UserRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,8 +20,10 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -28,9 +32,11 @@ public class AlarmServiceImpl implements AlarmService {
 
     private static final double NEAR_THRESHOLD_M = 500.0;
     private static final Duration THROTTLE_TTL = Duration.ofMinutes(30);
+    private static final Duration INVITE_TTL = Duration.ofHours(72);
 
     private final StringRedisTemplate redisTemplate;
     private final JavaMailSender mailSender;
+    private final UserRepository userRepository;
     private final ScheduleRepository scheduleRepository;
     private final ScheduleTouristSpotRepository scheduleTouristSpotRepository;
     private final UserGuardianLinkRepository userGuardianLinkRepository;
@@ -38,6 +44,9 @@ public class AlarmServiceImpl implements AlarmService {
 
     @Value("${spring.mail.username}")
     private String fromEmail;
+
+    @Value("${app.frontend.base-url}")
+    private String frontendBaseUrl;
 
     //현재 위치와 관광지 위치 비교해서 메일 발송
     @Override
@@ -151,9 +160,61 @@ public class AlarmServiceImpl implements AlarmService {
     }
 
     // 초대 메일 발송
-    @Override
     public void sendInvite(Long wardUserId, String guardianEmail) {
+        String email = guardianEmail.trim().toLowerCase();
+        String token = UUID.randomUUID().toString();
+        String key = "invite:" + token;
 
+        String payload = """
+            {"wardUserId":%d,"guardianEmail":"%s"}
+            """.formatted(wardUserId, email);
+
+        // NX + EX
+        Boolean ok = redisTemplate.opsForValue().setIfAbsent(key, payload, INVITE_TTL);
+        if (Boolean.FALSE.equals(ok)) {
+            throw new IllegalStateException("초대 토큰 생성에 실패했습니다.");
+        }
+
+        String acceptUrl = "%s/invite/accept?token=%s".formatted(frontendBaseUrl, token);
+
+        SimpleMailMessage msg = new SimpleMailMessage();
+        msg.setTo(email);
+        msg.setSubject("[SeniorWay] 보호자 초대 수락 안내");
+        msg.setText("""
+                안녕하세요. 보호자로 초대되었습니다.
+
+                아래 링크를 클릭해 72시간 내 수락을 완료해 주세요:
+                %s
+
+                본 메일이 본인과 무관하다면 무시하셔도 됩니다.
+                """.formatted(acceptUrl));
+
+        mailSender.send(msg);
+        log.info("Invite mail sent via Redis token. ward={}, to={}", wardUserId, email);
+    }
+
+    @Override
+    @Transactional
+    public void accept(String token, Long guardianUserId) {
+        String key = "invite:" + token;
+        String payload = redisTemplate.opsForValue().getAndDelete(key);
+        if (payload == null) throw new IllegalArgumentException("토큰이 유효하지 않습니다.");
+
+        String[] parts = payload.split(":");
+        Long wardUserId = Long.valueOf(parts[0]);
+
+        User ward = userRepository.findById(wardUserId).orElseThrow();
+        User guardian = userRepository.findById(guardianUserId).orElseThrow();
+
+        if (!userGuardianLinkRepository.existsByUser_IdAndGuardian_Id(ward.getId(), guardian.getId())) {
+            userGuardianLinkRepository.save(UserGuardianLinkEntity.builder()
+                    .user(ward)
+                    .guardian(guardian)
+                    .relation("보호자")
+                    .isPrimary(false)
+                    .createdAt(LocalDateTime.now())
+                    .build());
+        }
     }
 
     // 문자열 좌표 안전 파싱
