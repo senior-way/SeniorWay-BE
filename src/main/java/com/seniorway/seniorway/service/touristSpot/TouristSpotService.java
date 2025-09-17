@@ -457,15 +457,14 @@ public class TouristSpotService {
             if (!("12".equals(contentTypeId) || "28".equals(contentTypeId) || "38".equals(contentTypeId) || "39".equals(contentTypeId))) continue;
             String contentId = spot.getContentId();
             if (wheelchairAccessRepository.existsByContentId(contentId)) {
-                // 이미 저장된 경우 exitInfo 값으로 isBarierFree만 판별/수정
                 WheelchairAccessEntity entity = wheelchairAccessRepository.findByContentId(contentId);
-                boolean isBarierFree = entity.getExitInfo() != null && !entity.getExitInfo().isBlank();
-                if (entity.isBarierFree() != isBarierFree) {
-                    entity.setBarierFree(isBarierFree);
+                int isBarrierFree = (entity.getExitInfo() != null && !entity.getExitInfo().isBlank()) ? 1 : 0;
+                if ((entity.getBarrierFree() == null ? 0 : (entity.getBarrierFree() ? 1 : 0)) != isBarrierFree) {
+                    entity.setBarrierFree(isBarrierFree == 1);
                     wheelchairAccessRepository.save(entity);
-                    logger.info("[TouristSpotService] 무장애 정보 isBarierFree 컬럼만 수정: contentId={}, isBarierFree={}", contentId, isBarierFree);
+                    logger.info("[TouristSpotService] 무장애 정보 barrierFree 컬럼만 수정: contentId={}, barrierFree={}", contentId, isBarrierFree);
                 } else {
-                    logger.info("[TouristSpotService] 이미 무장애 정보가 저장되어 있고 isBarierFree도 일치: contentId={}", contentId);
+                    logger.info("[TouristSpotService] 이미 무장애 정보가 저장되어 있고 barrierFree도 일치: contentId={}", contentId);
                 }
                 continue;
             }
@@ -533,10 +532,10 @@ public class TouristSpotService {
                 entity.setExitInfo(exitInfo);
                 entity.setElevator(item.optString("elevator", null));
                 entity.setRestroom(item.optString("restroom", null));
-                entity.setBarierFree(exitInfo != null && !exitInfo.isBlank());
+                entity.setBarrierFree(exitInfo != null && !exitInfo.isBlank() ? true : false); // 1(true) or 0(false)
                 wheelchairAccessRepository.save(entity);
                 savedCount++;
-                logger.info("[TouristSpotService] 무장애 정보 저장 완료: contentId={}, isBarierFree={}", contentId, entity.isBarierFree());
+                logger.info("[TouristSpotService] 무장애 정보 저장 완료: contentId={}, barrierFree={}", contentId, entity.getBarrierFree() ? 1 : 0);
             } catch (Exception e) {
                 logger.error("[TouristSpotService] 무장애 정보 저장 실패: contentId={}, error={}", spot.getContentId(), e.getMessage(), e);
             }
@@ -647,7 +646,6 @@ public class TouristSpotService {
         JSONObject result = new JSONObject();
         result.put("spot", spot);
 
-        // 상세정보(spot 필드 제거)
         Object detail = null;
         switch (contentTypeId) {
             case "12":
@@ -695,9 +693,8 @@ public class TouristSpotService {
         }
         if (detail != null) result.put("detail", detail);
 
-        // 무장애 정보
         WheelchairAccessEntity wheelchair = wheelchairAccessRepository.findByContentId(contentId);
-        if (wheelchair != null && wheelchair.isBarierFree()) {
+        if (wheelchair != null && Boolean.TRUE.equals(wheelchair.getBarrierFree())) {
             result.put("wheelchairAccess", wheelchair);
         }
 

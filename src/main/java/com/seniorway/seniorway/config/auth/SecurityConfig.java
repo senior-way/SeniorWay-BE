@@ -33,6 +33,7 @@ public class SecurityConfig {
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // 세션 사용 안 함
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**", "/auth/**", "/swagger-ui/**", "/swagger-ui.html", "/api-docs/**", "/swagger-resources/**", "/slack").permitAll()
+                        .requestMatchers("/api/schedules/**").permitAll()
                         .requestMatchers("/h2-console/**").permitAll()
                         .anyRequest().authenticated())
                         //.anyRequest().permitAll())

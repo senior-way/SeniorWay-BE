@@ -226,9 +226,17 @@ public class JwtTokenProvider {
                 .parseClaimsJws(token)
                 .getBody();
 
-        Long userId = extractUserIdFromToken(token);
+        // 최적화: 토큰을 다시 파싱하는 대신 claims에서 직접 userId 추출
+        Long userId = Long.parseLong(claims.getSubject());
         String email = claims.get("email", String.class);
-        Role roleEnum = Role.valueOf(claims.get("role", String.class));
+        String roleString = claims.get("role", String.class);
+
+        // Null-check 추가: role 클레임이 없는 토큰에 대한 방어 코드
+        if (roleString == null || roleString.trim().isEmpty()) {
+            throw new JwtException("Token is missing 'role' claim");
+        }
+
+        Role roleEnum = Role.valueOf(roleString);
 
         List<SimpleGrantedAuthority> authorities = List.of(new SimpleGrantedAuthority(roleEnum.getKey()));
 

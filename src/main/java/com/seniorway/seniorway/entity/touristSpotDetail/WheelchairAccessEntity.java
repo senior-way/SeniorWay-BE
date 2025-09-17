@@ -2,9 +2,15 @@ package com.seniorway.seniorway.entity.touristSpotDetail;
 
 import jakarta.persistence.*;
 import com.seniorway.seniorway.entity.common.BaseTimeEntity;
+import lombok.*;
 
 @Entity
 @Table(name = "wheelchair_access_info", uniqueConstraints = @UniqueConstraint(name = "uk_content", columnNames = "content_id"))
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class WheelchairAccessEntity extends BaseTimeEntity {
 
     @Id
@@ -29,70 +35,6 @@ public class WheelchairAccessEntity extends BaseTimeEntity {
     @Column(name = "restroom", length = 100)
     private String restroom;
 
-    @Column(name = "is_barier_free", nullable = false)
-    private boolean isBarierFree = false;
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getContentId() {
-        return contentId;
-    }
-
-    public void setContentId(String contentId) {
-        this.contentId = contentId;
-    }
-
-    public String getParking() {
-        return parking;
-    }
-
-    public void setParking(String parking) {
-        this.parking = parking;
-    }
-
-    public String getRoute() {
-        return route;
-    }
-
-    public void setRoute(String route) {
-        this.route = route;
-    }
-
-    public String getExitInfo() {
-        return exitInfo;
-    }
-
-    public void setExitInfo(String exitInfo) {
-        this.exitInfo = exitInfo;
-    }
-
-    public String getElevator() {
-        return elevator;
-    }
-
-    public void setElevator(String elevator) {
-        this.elevator = elevator;
-    }
-
-    public String getRestroom() {
-        return restroom;
-    }
-
-    public void setRestroom(String restroom) {
-        this.restroom = restroom;
-    }
-
-    public boolean isBarierFree() {
-        return isBarierFree;
-    }
-
-    public void setBarierFree(boolean barierFree) {
-        isBarierFree = barierFree;
-    }
+    @Column(name = "is_barrier_free")
+    private Boolean barrierFree;
 }
