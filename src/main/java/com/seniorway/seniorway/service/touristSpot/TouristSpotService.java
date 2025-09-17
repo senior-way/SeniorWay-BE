@@ -708,4 +708,14 @@ public class TouristSpotService {
 
         return result.toMap();
     }
+
+    public java.util.List<TouristSpotEntity> findBarrierFreeTouristSpots() {
+        // barrierFree가 true인 WheelchairAccessEntity의 contentId 목록 조회
+        var barrierFreeIds = wheelchairAccessRepository.findAll().stream()
+                .filter(w -> Boolean.TRUE.equals(w.getBarrierFree()))
+                .map(w -> w.getContentId())
+                .toList();
+        // 해당 contentId에 해당하는 TouristSpotEntity 목록 반환
+        return touristSpotRepository.findAllByContentIdIn(barrierFreeIds);
+    }
 }

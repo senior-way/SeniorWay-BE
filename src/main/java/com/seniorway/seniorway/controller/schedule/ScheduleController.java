@@ -1,7 +1,7 @@
 package com.seniorway.seniorway.controller.schedule;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.seniorway.seniorway.dto.schedule.SchedulePromptRequestDto;
-import com.seniorway.seniorway.dto.schedule.SchedulePromptResponseDto;
 import com.seniorway.seniorway.security.CustomUserDetails;
 import com.seniorway.seniorway.service.schedule.ScheduleService;
 import lombok.RequiredArgsConstructor;
@@ -20,14 +20,13 @@ public class ScheduleController {
     private final ScheduleService scheduleService;
 
     @PostMapping("/prompt")
-    public ResponseEntity<SchedulePromptResponseDto> createSchedulePrompt(
+    public ResponseEntity<JsonNode> createSchedulePrompt(
             @RequestBody SchedulePromptRequestDto requestDto,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
 
         String userEmail = userDetails.getUsername();
-        String prompt = scheduleService.generateSchedulePrompt(requestDto, userEmail);
-        SchedulePromptResponseDto responseDto = new SchedulePromptResponseDto(prompt);
+        JsonNode responseNode = scheduleService.generateSchedulePrompt(requestDto, userEmail);
 
-        return ResponseEntity.ok(responseDto);
+        return ResponseEntity.ok(responseNode);
     }
 }

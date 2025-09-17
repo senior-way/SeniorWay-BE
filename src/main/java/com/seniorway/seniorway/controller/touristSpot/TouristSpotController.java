@@ -65,4 +65,14 @@ public class TouristSpotController {
             return ResponseEntity.status(500).body("상세정보 조회 중 오류 발생");
         }
     }
+
+    @GetMapping("/barrier-free")
+    public ResponseEntity<?> getBarrierFreeTouristSpots() {
+        try {
+            var spots = touristSpotService.findBarrierFreeTouristSpots();
+            return ResponseEntity.ok(spots);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("무장애(barrier free) 관광지 조회 중 오류 발생");
+        }
+    }
 }
