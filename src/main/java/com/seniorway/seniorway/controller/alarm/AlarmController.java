@@ -37,7 +37,7 @@ public class AlarmController {
                                     @RequestParam String wardEmail,
                                     @RequestParam(required = false) String wardName) {
         Long guardianUserId = customUserDetails.getUserId();
-        alarmService.sendInvite(guardianUserId, wardEmail); // 토큰 생성 + 메일 발송
+        alarmService.sendInvite(guardianUserId, wardEmail, wardName); // 토큰 생성 + 메일 발송
         return ResponseEntity.ok("초대 메일을 전송하였습니다.");
     }
 
