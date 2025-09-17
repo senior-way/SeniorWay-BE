@@ -123,7 +123,7 @@ public class ScheduleServiceImpl implements ScheduleService {
             .filter(spot -> !"39".equals(spot.getContentTypeId()))
             .collect(Collectors.toList());
 
-        // 최종 관광지 목록(title, contentId)
+        // 최종 관광지 목록(title, contentId, firstImage)
         List<TouristSpotEntity> finalSpots = new ArrayList<>();
         finalSpots.addAll(nonRestaurantSpots);
         finalSpots.addAll(limitedRestaurants);
@@ -137,11 +137,13 @@ public class ScheduleServiceImpl implements ScheduleService {
         if(isWithPet) promptBuilder.append("반려동물 동반, ");
         promptBuilder.append("디지털 활용 능력 ").append(userProfile.getDigitalLiteracy()).append(" 등급\n");
         promptBuilder.append("선호 카테고리: ").append(String.join(", ", preferredCategories)).append("\n");
-        promptBuilder.append("추천 관광지 목록:\n");
+        promptBuilder.append("추천 관광지 목록(사진 링크 포함):\n");
 
         finalSpots.forEach(spot -> {
             promptBuilder.append("- ").append(spot.getTitle())
-                         .append(" (contentId: ").append(spot.getContentId()).append(")\n");
+                         .append(" (contentId: ").append(spot.getContentId())
+                         .append(", firstImage: ").append(spot.getFirstimage() != null ? spot.getFirstimage() : "없음")
+                         .append(")\n");
         });
 
         promptBuilder.append("\n");
@@ -151,19 +153,19 @@ public class ScheduleServiceImpl implements ScheduleService {
         promptBuilder.append("3. 음식점은 반드시 아침, 점심, 저녁(+ 간식) 시간에 맞춰 배치한다.\n");
         promptBuilder.append("4. 관광지는 이동 동선을 고려하여 효율적으로 순서를 배치한다.\n");
         promptBuilder.append("5. 각 일정 항목은 다음 순서와 형식으로 출력한다:\n");
-        promptBuilder.append("   - 시작 시간 → 장소 이름 → contentId\n");
+        promptBuilder.append("   - 시작 시간 → 장소 이름 → contentId → firstImage\n");
         promptBuilder.append("6. 전체 결과는 반드시 JSON 형식으로 출력하며, 제공한 예시와 동일한 구조를 유지한다.\n");
         promptBuilder.append("   (불필요한 텍스트나 설명은 출력하지 않는다.)\n");
 
         promptBuilder.append("반환 예시\n");
         promptBuilder.append("{\n");
         promptBuilder.append("  \"day1\": [\n");
-        promptBuilder.append("    {\"time\": \"09:00\", \"place\": \"관광지 또는 음식점 이름\", \"contentId\": \"관광지 또는 음식점 contentId\"},\n");
-        promptBuilder.append("    {\"time\": \"11:00\", \"place\": \"관광지 또는 음식점 이름\", \"contentId\": \"관광지 또는 음식점 contentId\"},\n");
-        promptBuilder.append("    {\"time\": \"13:00\", \"place\": \"관광지 또는 음식점 이름\", \"contentId\": \"관광지 또는 음식점 contentId\"},\n");
-        promptBuilder.append("    {\"time\": \"15:00\", \"place\": \"관광지 또는 음식점 이름\", \"contentId\": \"관광지 또는 음식점 contentId\"},\n");
-        promptBuilder.append("    {\"time\": \"17:00\", \"place\": \"관광지 또는 음식점 이름\", \"contentId\": \"관광지 또는 음식점 contentId\"},\n");
-        promptBuilder.append("    {\"time\": \"19:00\", \"place\": \"관광지 또는 음식점 이름\", \"contentId\": \"관광지 또는 음식점 contentId\"}\n");
+        promptBuilder.append("    {\"time\": \"09:00\", \"place\": \"관광지 또는 음식점 이름\", \"contentId\": \"관광지 또는 음식점 contentId\", \"firstImage\": \"사진 링크\"},\n");
+        promptBuilder.append("    {\"time\": \"11:00\", \"place\": \"관광지 또는 음식점 이름\", \"contentId\": \"관광지 또는 음식점 contentId\", \"firstImage\": \"사진 링크\"},\n");
+        promptBuilder.append("    {\"time\": \"13:00\", \"place\": \"관광지 또는 음식점 이름\", \"contentId\": \"관광지 또는 음식점 contentId\", \"firstImage\": \"사진 링크\"},\n");
+        promptBuilder.append("    {\"time\": \"15:00\", \"place\": \"관광지 또는 음식점 이름\", \"contentId\": \"관광지 또는 음식점 contentId\", \"firstImage\": \"사진 링크\"},\n");
+        promptBuilder.append("    {\"time\": \"17:00\", \"place\": \"관광지 또는 음식점 이름\", \"contentId\": \"관광지 또는 음식점 contentId\", \"firstImage\": \"사진 링크\"},\n");
+        promptBuilder.append("    {\"time\": \"19:00\", \"place\": \"관광지 또는 음식점 이름\", \"contentId\": \"관광지 또는 음식점 contentId\", \"firstImage\": \"사진 링크\"}\n");
         promptBuilder.append("  ],\n");
         promptBuilder.append("  \"day2\": [ ... ],\n");
         promptBuilder.append("  \"day3\": [ ... ],\n");
@@ -187,7 +189,7 @@ public class ScheduleServiceImpl implements ScheduleService {
             String jsonOnly = gptResponse.substring(startIdx, endIdx + 1);
 
             try {
-                return mapper.readTree(jsonOnly); // JsonNode를 직접 반환
+                return mapper.readTree(jsonOnly); // JsonNode를 직접 반환 (firstImage 포함)
             } catch (Exception e) {
                 // 파싱 실패 시 에러를 담은 JsonNode 반환
                 return mapper.createObjectNode().put("error", "GPT 응답 JSON 파싱에 실패했습니다: " + e.getMessage());
