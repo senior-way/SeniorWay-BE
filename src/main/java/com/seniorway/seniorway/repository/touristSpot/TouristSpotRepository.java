@@ -10,4 +10,7 @@ import java.util.Optional;
 public interface TouristSpotRepository extends JpaRepository<TouristSpotEntity, Long> {
     // tourist_spot_id로 조회
     Optional<TouristSpotEntity> findByTouristSpotId(Long touristSpotId);
+
+    // content_id로 조회
+    TouristSpotEntity findByContentId(String contentId);
 }

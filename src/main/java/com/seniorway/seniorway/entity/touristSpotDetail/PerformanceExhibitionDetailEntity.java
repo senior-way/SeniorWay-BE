@@ -39,7 +39,7 @@ public class PerformanceExhibitionDetailEntity {
     @Column(length = 50)
     private String spendTime;
 
-    @Column(length = 50)
+    @Column(length = 200)
     private String parkingFee;
 
     @Column(length = 50)
@@ -48,13 +48,13 @@ public class PerformanceExhibitionDetailEntity {
     @Column(length = 20)
     private String accomCount;
 
-    @Column(length = 50)
+    @Column(length = 400)
     private String useTime;
 
-    @Column(length = 50)
+    @Column(length = 200)
     private String restDate;
 
-    @Column(length = 50)
+    @Column(length = 200)
     private String parkingAvailable;
 
     @Column(length = 10)

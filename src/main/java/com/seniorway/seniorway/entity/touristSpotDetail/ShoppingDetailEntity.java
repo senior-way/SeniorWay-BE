@@ -27,7 +27,7 @@ public class ShoppingDetailEntity {
     })
     private TouristSpotEntity touristSpot;
 
-    @Column(length = 100)
+    @Column(length = 400)
     private String saleItem;
 
     @Column(length = 255)
@@ -54,10 +54,10 @@ public class ShoppingDetailEntity {
     @Column(length = 100)
     private String scale;
 
-    @Column(length = 100)
+    @Column(length = 200)
     private String restDate;
 
-    @Column(length = 50)
+    @Column(length = 200)
     private String parkingAvailable;
 
     @Column(length = 10)
@@ -66,7 +66,7 @@ public class ShoppingDetailEntity {
     @Column(length = 10)
     private String chkPet;
 
-    @Column(length = 10)
+    @Column(length = 200)
     private String chkCreditCard;
 
     @Column(length = 100)
