@@ -31,12 +31,11 @@ public class UserGuardianLinkEntity {
     @JoinColumn(name = "guardian_id", nullable = false)
     private User guardian;
 
-    @Column(name = "relation", length = 50)
-    private String relation;
-
-    @Column(name = "is_primary")
-    private Boolean isPrimary;
-
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
+
+    @PrePersist
+    public void prePersist() {
+        this.createdAt = LocalDateTime.now();
+    }
 }
