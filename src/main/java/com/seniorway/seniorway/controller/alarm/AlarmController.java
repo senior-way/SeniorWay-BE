@@ -34,9 +34,10 @@ public class AlarmController {
 
     @PostMapping("/guardian/invite")
     public ResponseEntity<?> invite(@AuthenticationPrincipal CustomUserDetails customUserDetails,
-                                    @RequestParam String guardianEmail) {
-        Long wardUserId = customUserDetails.getUserId();
-        alarmService.sendInvite(wardUserId, guardianEmail); // 토큰 생성 + 메일 발송
+                                    @RequestParam String wardEmail,
+                                    @RequestParam(required = false) String wardName) {
+        Long guardianUserId = customUserDetails.getUserId();
+        alarmService.sendInvite(guardianUserId, wardEmail); // 토큰 생성 + 메일 발송
         return ResponseEntity.ok("초대 메일을 전송하였습니다.");
     }
 
@@ -44,8 +45,8 @@ public class AlarmController {
     public ResponseEntity<?> accept(@RequestParam("token") @NotBlank String token,
                                     @AuthenticationPrincipal CustomUserDetails customUserDetails) {
         log.info("accept token={}", token);
-        Long guardianUserId = customUserDetails.getUserId();
-        alarmService.accept(token, guardianUserId);
+        Long wardUserId = customUserDetails.getUserId();
+        alarmService.accept(token, wardUserId);
         return ResponseEntity.ok("초대에 수락하였습니다.");
     }
 }
