@@ -4,6 +4,7 @@ import com.seniorway.seniorway.entity.touristSpot.TouristSpotEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -13,4 +14,7 @@ public interface TouristSpotRepository extends JpaRepository<TouristSpotEntity, 
 
     // content_id로 조회
     TouristSpotEntity findByContentId(String contentId);
+
+    // content_id 리스트로 조회
+    List<TouristSpotEntity> findAllByContentIdIn(List<String> contentIds);
 }
