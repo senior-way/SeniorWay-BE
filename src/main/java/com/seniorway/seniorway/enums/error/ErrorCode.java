@@ -38,6 +38,10 @@ public enum ErrorCode {
     // 404 Not Found
     NOT_FOUND(HttpStatus.NOT_FOUND, "요청하신 리소스를 찾을 수 없습니다."),
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 유저입니다."),
+    USER_PROFILE_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 사용자 프로필입니다."),
+    USER_ROLE_NOT_FOUND(HttpStatus.NOT_FOUND, "유저의 권한 정보가 존재하지 않습니다."),
+    TOURIST_SPOT_BARRIER_FREE_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 관광지의 무장애 정보가 존재하지 않습니다."),
+    TOURIST_SPOT_PET_FRIENDLY_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 관광지의 반려동물 동반 정보가 존재하지 않습니다."),
 
     // 500 Internal Server Error
     DATABASE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "DB 에러가 발생했습니다."),

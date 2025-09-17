@@ -1,8 +1,8 @@
 package com.seniorway.seniorway.controller.profile;
 
-import com.seniorway.seniorway.dto.auth.AuthUserDTO;
 import com.seniorway.seniorway.dto.profile.UserProfileRequestDto;
 import com.seniorway.seniorway.entity.profile.UserProfileEntity;
+import com.seniorway.seniorway.security.CustomUserDetails;
 import com.seniorway.seniorway.service.profile.UserProfileService;
 import io.swagger.v3.oas.annotations.Parameter;
 import lombok.RequiredArgsConstructor;
@@ -20,14 +20,14 @@ public class UserProfileController {
     private final UserProfileService userProfileService;
 
     @PostMapping
-    public ResponseEntity<UserProfileEntity> createOrUpdateProfile(@Parameter(hidden = true) @AuthenticationPrincipal AuthUserDTO authUser, @RequestBody UserProfileRequestDto requestDto) {
-        UserProfileEntity userProfile = userProfileService.createOrUpdateProfile(authUser.getUserId(), requestDto);
+    public ResponseEntity<UserProfileEntity> createOrUpdateProfile(@Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails, @RequestBody UserProfileRequestDto requestDto) {
+        UserProfileEntity userProfile = userProfileService.createOrUpdateProfile(userDetails.getUserId(), requestDto);
         return ResponseEntity.ok(userProfile);
     }
 
     @GetMapping("/me")
-    public ResponseEntity<UserProfileEntity> getMyProfile(@Parameter(hidden = true) @AuthenticationPrincipal AuthUserDTO authUser) {
-        UserProfileEntity userProfile = userProfileService.getProfile(authUser.getUserId());
+    public ResponseEntity<UserProfileEntity> getMyProfile(@Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+        UserProfileEntity userProfile = userProfileService.getProfile(userDetails.getUserId());
         return ResponseEntity.ok(userProfile);
     }
 
@@ -37,8 +37,8 @@ public class UserProfileController {
     }
 
     @DeleteMapping("/me")
-    public ResponseEntity<Void> deleteMyProfile(@Parameter(hidden = true) @AuthenticationPrincipal AuthUserDTO authUser) {
-        userProfileService.deleteProfile(authUser.getUserId());
+    public ResponseEntity<Void> deleteMyProfile(@Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+        userProfileService.deleteProfile(userDetails.getUserId());
         return ResponseEntity.noContent().build();
     }
 }
