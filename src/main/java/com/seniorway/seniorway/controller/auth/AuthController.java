@@ -1,5 +1,6 @@
 package com.seniorway.seniorway.controller.auth;
 
+import com.seniorway.seniorway.dto.auth.GuardianSignUpRequestsDTO;
 import com.seniorway.seniorway.enums.user.Role;
 import com.seniorway.seniorway.jwt.JwtTokenProvider;
 import com.seniorway.seniorway.dto.auth.UserLoginRequestsDTO;
@@ -50,8 +51,14 @@ public class AuthController {
 
     @PostMapping("/signup")
     public ResponseEntity<String> signup(@RequestBody @Valid UserSignUpRequestsDTO userSignUpRequest) {
-        authService.signUp(userSignUpRequest);
+        authService.signup(userSignUpRequest);
         return ResponseEntity.ok("Signup successful");
+    }
+
+    @PostMapping("/guardian-signup")
+    public ResponseEntity<String> guardianSignup(@RequestBody @Valid GuardianSignUpRequestsDTO dto) {
+        authService.guardianSignup(dto);
+        return ResponseEntity.ok("Guardian signup successful");
     }
 
     @PostMapping("/refresh-token")
