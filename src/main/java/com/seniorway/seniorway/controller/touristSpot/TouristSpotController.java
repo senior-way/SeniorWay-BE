@@ -70,7 +70,17 @@ public class TouristSpotController {
     public ResponseEntity<?> getBarrierFreeTouristSpots() {
         try {
             var spots = touristSpotService.findBarrierFreeTouristSpots();
-            return ResponseEntity.ok(spots);
+            // contentId, title, contentTypeId만 추출해서 반환
+            var result = spots.stream()
+                    .map(spot -> {
+                        var map = new java.util.HashMap<String, Object>();
+                        map.put("contentId", spot.getContentId());
+                        map.put("title", spot.getTitle());
+                        map.put("contentTypeId", spot.getContentTypeId());
+                        return map;
+                    })
+                    .toList();
+            return ResponseEntity.ok(result);
         } catch (Exception e) {
             return ResponseEntity.status(500).body("무장애(barrier free) 관광지 조회 중 오류 발생");
         }
