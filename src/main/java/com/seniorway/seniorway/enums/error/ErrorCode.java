@@ -22,6 +22,9 @@ public enum ErrorCode {
     NO_GUARDIAN_LINK(HttpStatus.BAD_REQUEST, "연결된 보호자가 없습니다."),
     NO_LOCATION_DATA(HttpStatus.BAD_REQUEST, "해당 위치 데이터가 존재하지 않습니다."),
     HTTP_REQUEST_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "외부 API 요청 실패"),
+    INVALID_USER_ROLE(HttpStatus.BAD_REQUEST, "현재 사용자는 유저가 아닙니다"),
+    INVALID_GUARDIAN_ROLE(HttpStatus.BAD_REQUEST, "현재 사용자는 보호자가 아닙니다"),
+    BAD_REQUEST(HttpStatus.BAD_REQUEST, "잘못된 요청입니다."),
 
     // 401 Unauthorized
     AUTH_TOKEN_INVALID(HttpStatus.UNAUTHORIZED, "유효하지 않거나 만료된 토큰입니다."),
