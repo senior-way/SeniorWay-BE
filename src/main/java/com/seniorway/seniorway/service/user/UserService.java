@@ -12,11 +12,11 @@ import java.util.Optional;
 public class UserService {
     private final UserRepository userRepository;
 
-    public Optional<User> getUserByEmail(String email) {
+    public Optional<User> findUserByEmail(String email) {
         return userRepository.findByEmail(email);
     }
 
-    public Optional<User> getUserById(Long id) {
+    public Optional<User> findUserById(Long id) {
         return userRepository.findById(id);
     }
 }

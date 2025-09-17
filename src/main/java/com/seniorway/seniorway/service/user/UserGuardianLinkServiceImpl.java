@@ -18,14 +18,14 @@ public class UserGuardianLinkServiceImpl implements UserGuardianLinkService {
 
     @Override
     public void linkGuardianIdToUserEmail(Long guardianId, String userEmail) {
-        User user = userService.getUserByEmail(userEmail)
+        User user = userService.findUserByEmail(userEmail)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         if (user.getRole() != Role.USER) {
             throw new CustomException(ErrorCode.INVALID_USER_ROLE);
         }
 
-        User guardian = userService.getUserById(guardianId)
+        User guardian = userService.findUserById(guardianId)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         if (guardian.getRole() != Role.GUARDIANS) {
