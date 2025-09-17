@@ -57,4 +57,13 @@ public class ScheduleController {
 
         return ResponseEntity.ok(scheduleJson);
     }
+
+    // 일정 목록 조회 API 추가
+    @GetMapping("/list")
+    public ResponseEntity<?> getScheduleList(
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        String userEmail = userDetails.getUsername();
+        return ResponseEntity.ok(scheduleService.getScheduleList(userEmail));
+    }
 }

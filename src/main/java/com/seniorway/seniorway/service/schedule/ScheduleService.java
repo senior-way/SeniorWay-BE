@@ -11,4 +11,7 @@ public interface ScheduleService {
 
     // 저장된 일정 JSON 반환 메서드
     JsonNode getScheduleJson(Long scheduleId, String userEmail);
+
+    // 일정 목록 조회
+    Object getScheduleList(String userEmail);
 }

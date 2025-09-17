@@ -350,4 +350,46 @@ public class ScheduleServiceImpl implements ScheduleService {
 
         return result;
     }
+
+    @Override
+    public Object getScheduleList(String userEmail) {
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        List<ScheduleEntity> schedules = scheduleRepository.findByUserId(user.getId());
+
+        return schedules.stream()
+                .map(s -> {
+                    var obj = new java.util.HashMap<String, Object>();
+                    obj.put("scheduleId", s.getScheduleId());
+                    obj.put("title", s.getTitle());
+                    obj.put("createdAt", s.getCreatedTime());
+
+                    // day1 관광지 조회 및 photoUrl 결정
+                    List<ScheduleTouristSpotEntity> day1Spots = scheduleTouristSpotRepository.findBySchedule(s).stream()
+                        .filter(sts -> "day1".equals(sts.getVisitDate()))
+                        .sorted((a, b) -> a.getSequenceOrder().compareTo(b.getSequenceOrder()))
+                        .toList();
+
+                    String photoUrl = null;
+                    if (day1Spots.size() >= 2) {
+                        String img2 = day1Spots.get(1).getTouristSpot().getFirstimage();
+                        if (img2 != null && !img2.isBlank()) {
+                            photoUrl = img2;
+                        }
+                    }
+                    if (photoUrl == null && day1Spots.size() >= 3) {
+                        String img3 = day1Spots.get(2).getTouristSpot().getFirstimage();
+                        if (img3 != null && !img3.isBlank()) {
+                            photoUrl = img3;
+                        }
+                    }
+                    if (photoUrl != null) {
+                        obj.put("photoUrl", photoUrl);
+                    }
+
+                    return obj;
+                })
+                .toList();
+    }
 }
