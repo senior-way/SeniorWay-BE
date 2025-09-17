@@ -42,6 +42,9 @@ public enum ErrorCode {
     USER_ROLE_NOT_FOUND(HttpStatus.NOT_FOUND, "유저의 권한 정보가 존재하지 않습니다."),
     TOURIST_SPOT_BARRIER_FREE_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 관광지의 무장애 정보가 존재하지 않습니다."),
     TOURIST_SPOT_PET_FRIENDLY_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 관광지의 반려동물 동반 정보가 존재하지 않습니다."),
+    SCHEDULE_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 일정입니다."),
+    SCHEDULE_SPOT_NOT_FOUND(HttpStatus.NOT_FOUND, "일정에 등록된 관광지가 없습니다."),
+
 
     // 500 Internal Server Error
     DATABASE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "DB 에러가 발생했습니다."),

@@ -11,6 +11,10 @@ import com.seniorway.seniorway.repository.touristSpot.TouristSpotRepository;
 import com.seniorway.seniorway.repository.touristSpotDetail.PetFriendlyInfoRepository;
 import com.seniorway.seniorway.repository.touristSpotDetail.WheelchairAccessRepository;
 import com.seniorway.seniorway.repository.user.UserRepository;
+import com.seniorway.seniorway.entity.schedule.ScheduleEntity;
+import com.seniorway.seniorway.entity.schedule.ScheduleTouristSpotEntity;
+import com.seniorway.seniorway.repository.schedule.ScheduleRepository;
+import com.seniorway.seniorway.repository.schedule.ScheduleTouristSpotRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
@@ -19,9 +23,15 @@ import org.springframework.web.client.RestTemplate;
 import org.json.JSONObject;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -35,6 +45,8 @@ public class ScheduleServiceImpl implements ScheduleService {
     // 상세 정보 조회를 위해 관련 레포지토리를 주입합니다.
     private final WheelchairAccessRepository wheelchairAccessRepository;
     private final PetFriendlyInfoRepository petFriendlyInfoRepository;
+    private final ScheduleRepository scheduleRepository;
+    private final ScheduleTouristSpotRepository scheduleTouristSpotRepository;
 
     @Value("${openai.api-key}")
     private String openaiApiKey;
@@ -234,5 +246,150 @@ public class ScheduleServiceImpl implements ScheduleService {
             // 에러 처리: 필요에 따라 상세 로깅 및 예외 처리
             return "{\"error\": \"GPT API 호출 실패\"}";
         }
+    }
+
+    @Override
+    public void saveSchedule(String userEmail, String title, JsonNode scheduleJson) {
+        // 사용자 조회
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        // 스케줄 엔티티 생성 및 저장
+        ScheduleEntity schedule = ScheduleEntity.builder()
+                .user(user)
+                .title(title)
+                .build();
+        scheduleRepository.save(schedule);
+
+        // JSON 필드 순회
+        Iterator<String> fieldNames = scheduleJson.fieldNames();
+        while (fieldNames.hasNext()) {
+            String dayKey = fieldNames.next(); // 예: day1, day2
+            JsonNode dayArr = scheduleJson.get(dayKey);
+
+            if (dayArr == null || !dayArr.isArray()) {
+                continue; // 배열이 아닐 경우 스킵
+            }
+
+            for (int i = 0; i < dayArr.size(); i++) {
+                JsonNode item = dayArr.get(i);
+
+                if (item == null || !item.hasNonNull("contentId")) {
+                    continue; // contentId 없으면 스킵
+                }
+
+                String contentId = item.get("contentId").asText();
+                String visitTime = item.hasNonNull("time") ? item.get("time").asText() : null;
+
+                TouristSpotEntity spot = touristSpotRepository.findByContentId(contentId);
+                if (spot == null) continue;
+
+                ScheduleTouristSpotEntity scheduleSpot = ScheduleTouristSpotEntity.builder()
+                        .schedule(schedule)
+                        .touristSpot(spot)
+                        .sequenceOrder(i + 1)
+                        .visitDate(dayKey) // 예: day1
+                        .visitTime(visitTime)
+                        .build();
+
+                scheduleTouristSpotRepository.save(scheduleSpot);
+            }
+        }
+    }
+
+    @Override
+    public JsonNode getScheduleJson(Long scheduleId, String userEmail) {
+        // 사용자 인증 및 스케줄 소유권 확인
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        ScheduleEntity schedule = scheduleRepository.findById(scheduleId)
+                .orElseThrow(() -> new CustomException(ErrorCode.SCHEDULE_NOT_FOUND));
+
+        if (!schedule.getUser().getId().equals(user.getId())) {
+            throw new CustomException(ErrorCode.FORBIDDEN);
+        }
+
+        List<ScheduleTouristSpotEntity> spots = scheduleTouristSpotRepository.findBySchedule(schedule);
+
+        ObjectMapper mapper = new ObjectMapper();
+        ObjectNode result = mapper.createObjectNode();
+
+        // day별로 그룹화
+        var grouped = spots.stream()
+            .collect(Collectors.groupingBy(ScheduleTouristSpotEntity::getVisitDate));
+
+        // day1, day2, ... 순으로 정렬
+        List<String> sortedDayKeys = grouped.keySet().stream()
+            .sorted((a, b) -> {
+                try {
+                    int numA = Integer.parseInt(a.replaceAll("[^0-9]", ""));
+                    int numB = Integer.parseInt(b.replaceAll("[^0-9]", ""));
+                    return Integer.compare(numA, numB);
+                } catch (Exception e) {
+                    return a.compareTo(b);
+                }
+            })
+            .toList();
+
+        for (String dayKey : sortedDayKeys) {
+            List<ScheduleTouristSpotEntity> daySpots = grouped.get(dayKey);
+            ArrayNode dayArr = mapper.createArrayNode();
+            daySpots.stream()
+                .sorted((a, b) -> a.getSequenceOrder().compareTo(b.getSequenceOrder()))
+                .forEach(spot -> {
+                    ObjectNode item = mapper.createObjectNode();
+                    item.put("time", spot.getVisitTime());
+                    item.put("place", spot.getTouristSpot().getTitle());
+                    item.put("contentId", spot.getTouristSpot().getContentId());
+                    item.put("firstImage", spot.getTouristSpot().getFirstimage() != null ? spot.getTouristSpot().getFirstimage() : "");
+                    dayArr.add(item);
+                });
+            result.set(dayKey, dayArr);
+        }
+
+        return result;
+    }
+
+    @Override
+    public Object getScheduleList(String userEmail) {
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        List<ScheduleEntity> schedules = scheduleRepository.findByUserId(user.getId());
+
+        return schedules.stream()
+                .map(s -> {
+                    var obj = new java.util.HashMap<String, Object>();
+                    obj.put("scheduleId", s.getScheduleId());
+                    obj.put("title", s.getTitle());
+                    obj.put("createdAt", s.getCreatedTime());
+
+                    // day1 관광지 조회 및 photoUrl 결정
+                    List<ScheduleTouristSpotEntity> day1Spots = scheduleTouristSpotRepository.findBySchedule(s).stream()
+                        .filter(sts -> "day1".equals(sts.getVisitDate()))
+                        .sorted((a, b) -> a.getSequenceOrder().compareTo(b.getSequenceOrder()))
+                        .toList();
+
+                    String photoUrl = null;
+                    if (day1Spots.size() >= 2) {
+                        String img2 = day1Spots.get(1).getTouristSpot().getFirstimage();
+                        if (img2 != null && !img2.isBlank()) {
+                            photoUrl = img2;
+                        }
+                    }
+                    if (photoUrl == null && day1Spots.size() >= 3) {
+                        String img3 = day1Spots.get(2).getTouristSpot().getFirstimage();
+                        if (img3 != null && !img3.isBlank()) {
+                            photoUrl = img3;
+                        }
+                    }
+                    if (photoUrl != null) {
+                        obj.put("photoUrl", photoUrl);
+                    }
+
+                    return obj;
+                })
+                .toList();
     }
 }

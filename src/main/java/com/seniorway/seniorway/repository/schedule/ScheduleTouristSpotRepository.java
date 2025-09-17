@@ -2,6 +2,7 @@ package com.seniorway.seniorway.repository.schedule;
 
 import com.seniorway.seniorway.dto.location.SpotPointDto;
 import com.seniorway.seniorway.entity.schedule.ScheduleTouristSpotEntity;
+import com.seniorway.seniorway.entity.schedule.ScheduleEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -12,6 +13,9 @@ import java.util.List;
 public interface ScheduleTouristSpotRepository extends JpaRepository<ScheduleTouristSpotEntity, Long> {
     // schedule_id로 조회
     List<ScheduleTouristSpotEntity> findBySchedule_ScheduleId(Long scheduleId);
+
+    // ScheduleEntity로 조회
+    List<ScheduleTouristSpotEntity> findBySchedule(ScheduleEntity schedule);
 
     @Query("""
       select new com.seniorway.seniorway.dto.location.SpotPointDto(
@@ -24,4 +28,3 @@ public interface ScheduleTouristSpotRepository extends JpaRepository<ScheduleTou
     """)
     List<SpotPointDto> findPointsByScheduleId(Long scheduleId);
 }
-
