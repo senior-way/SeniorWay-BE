@@ -32,4 +32,7 @@ public class ScheduleTouristSpotEntity extends BaseTimeEntity {
 
     @Column(name = "visit_date")
     private String visitDate; // YYYY-MM-DD 형식의 문자열
+
+    @Column(name = "visit_time")
+    private String visitTime; // HH:MM 형식의 문자열
 }

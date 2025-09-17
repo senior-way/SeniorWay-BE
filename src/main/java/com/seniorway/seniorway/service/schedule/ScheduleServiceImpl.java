@@ -12,7 +12,13 @@ import com.seniorway.seniorway.repository.touristSpotDetail.PetFriendlyInfoRepos
 import com.seniorway.seniorway.repository.touristSpotDetail.WheelchairAccessRepository;
 import com.seniorway.seniorway.repository.user.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+import org.json.JSONObject;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.JsonNode;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -30,9 +36,12 @@ public class ScheduleServiceImpl implements ScheduleService {
     private final WheelchairAccessRepository wheelchairAccessRepository;
     private final PetFriendlyInfoRepository petFriendlyInfoRepository;
 
+    @Value("${openai.api-key}")
+    private String openaiApiKey;
+
 
     @Override
-    public String generateSchedulePrompt(SchedulePromptRequestDto requestDto, String userEmail) {
+    public JsonNode generateSchedulePrompt(SchedulePromptRequestDto requestDto, String userEmail) {
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
@@ -114,12 +123,14 @@ public class ScheduleServiceImpl implements ScheduleService {
             .filter(spot -> !"39".equals(spot.getContentTypeId()))
             .collect(Collectors.toList());
 
-        // 최종 관광지 목록(title만)
-        List<String> spotTitles = new ArrayList<>();
-        spotTitles.addAll(nonRestaurantSpots.stream().map(TouristSpotEntity::getTitle).collect(Collectors.toList()));
-        spotTitles.addAll(limitedRestaurants.stream().map(TouristSpotEntity::getTitle).collect(Collectors.toList()));
+        // 최종 관광지 목록(title, contentId)
+        List<TouristSpotEntity> finalSpots = new ArrayList<>();
+        finalSpots.addAll(nonRestaurantSpots);
+        finalSpots.addAll(limitedRestaurants);
 
         StringBuilder promptBuilder = new StringBuilder();
+        promptBuilder.append("다음은 시니어세대 사용자의 여행 계획을 위한 정보입니다.\n");
+        promptBuilder.append("아래 정보로 여행 일정을 JSON 형식으로만 만들어줘.\n");
         promptBuilder.append("여행 기간: ").append(days).append("박 ").append(days + 1).append("일\n");
         promptBuilder.append("사용자 특성: ");
         if(isWheelchairUser) promptBuilder.append("휠체어 사용자, ");
@@ -128,12 +139,98 @@ public class ScheduleServiceImpl implements ScheduleService {
         promptBuilder.append("선호 카테고리: ").append(String.join(", ", preferredCategories)).append("\n");
         promptBuilder.append("추천 관광지 목록:\n");
 
-        spotTitles.forEach(title -> {
-            promptBuilder.append("- ").append(title).append("\n");
+        finalSpots.forEach(spot -> {
+            promptBuilder.append("- ").append(spot.getTitle())
+                         .append(" (contentId: ").append(spot.getContentId()).append(")\n");
         });
 
-        promptBuilder.append("\n위 정보를 바탕으로 상세 여행 일정을 계획해줘.");
+        promptBuilder.append("\n");
+        promptBuilder.append("제약 조건:\n");
+        promptBuilder.append("1. 하루 일정은 관광지 3곳 + 음식점 3곳(아침, 점심, 저녁)으로 구성한다.\n");
+        promptBuilder.append("2. 단, 사용자의 선호 카테고리에 \"먹거리\"가 포함된 경우에는 관광지 3곳 + 음식점 4곳(아침, 점심, 저녁, 간식)으로 구성한다.\n");
+        promptBuilder.append("3. 음식점은 반드시 아침, 점심, 저녁(+ 간식) 시간에 맞춰 배치한다.\n");
+        promptBuilder.append("4. 관광지는 이동 동선을 고려하여 효율적으로 순서를 배치한다.\n");
+        promptBuilder.append("5. 각 일정 항목은 다음 순서와 형식으로 출력한다:\n");
+        promptBuilder.append("   - 시작 시간 → 장소 이름 → contentId\n");
+        promptBuilder.append("6. 전체 결과는 반드시 JSON 형식으로 출력하며, 제공한 예시와 동일한 구조를 유지한다.\n");
+        promptBuilder.append("   (불필요한 텍스트나 설명은 출력하지 않는다.)\n");
 
-        return promptBuilder.toString();
+        promptBuilder.append("반환 예시\n");
+        promptBuilder.append("{\n");
+        promptBuilder.append("  \"day1\": [\n");
+        promptBuilder.append("    {\"time\": \"09:00\", \"place\": \"관광지 또는 음식점 이름\", \"contentId\": \"관광지 또는 음식점 contentId\"},\n");
+        promptBuilder.append("    {\"time\": \"11:00\", \"place\": \"관광지 또는 음식점 이름\", \"contentId\": \"관광지 또는 음식점 contentId\"},\n");
+        promptBuilder.append("    {\"time\": \"13:00\", \"place\": \"관광지 또는 음식점 이름\", \"contentId\": \"관광지 또는 음식점 contentId\"},\n");
+        promptBuilder.append("    {\"time\": \"15:00\", \"place\": \"관광지 또는 음식점 이름\", \"contentId\": \"관광지 또는 음식점 contentId\"},\n");
+        promptBuilder.append("    {\"time\": \"17:00\", \"place\": \"관광지 또는 음식점 이름\", \"contentId\": \"관광지 또는 음식점 contentId\"},\n");
+        promptBuilder.append("    {\"time\": \"19:00\", \"place\": \"관광지 또는 음식점 이름\", \"contentId\": \"관광지 또는 음식점 contentId\"}\n");
+        promptBuilder.append("  ],\n");
+        promptBuilder.append("  \"day2\": [ ... ],\n");
+        promptBuilder.append("  \"day3\": [ ... ],\n");
+        promptBuilder.append("  \"day4\": [ ... ],\n");
+        promptBuilder.append("  \"day5\": [ ... ],\n");
+        promptBuilder.append("  \"day6\": [ ... ]\n");
+        promptBuilder.append("}\n");
+        promptBuilder.append("위 예시에서 ... 부분은 day1과 동일한 형식으로 계속 이어지는 형태임\n");
+        promptBuilder.append("반드시 JSON 형식으로만, 다른 설명이나 내용 없이 출력\n");
+
+        String prompt = promptBuilder.toString();
+        ObjectMapper mapper = new ObjectMapper();
+
+        // GPT API 호출
+        String gptResponse = callGptApi(prompt);
+
+        // JSON만 추출
+        int startIdx = gptResponse.indexOf('{');
+        int endIdx = gptResponse.lastIndexOf('}');
+        if (startIdx != -1 && endIdx != -1 && endIdx > startIdx) {
+            String jsonOnly = gptResponse.substring(startIdx, endIdx + 1);
+
+            try {
+                return mapper.readTree(jsonOnly); // JsonNode를 직접 반환
+            } catch (Exception e) {
+                // 파싱 실패 시 에러를 담은 JsonNode 반환
+                return mapper.createObjectNode().put("error", "GPT 응답 JSON 파싱에 실패했습니다: " + e.getMessage());
+            }
+        } else {
+            // 올바른 JSON 형식이 아닐 경우 에러를 담은 JsonNode 반환
+            return mapper.createObjectNode().put("error", "올바른 JSON 응답이 아닙니다.");
+        }
+    }
+
+    // GPT API 호출 메서드 추가
+    private String callGptApi(String prompt) {
+        String apiUrl = "https://api.openai.com/v1/chat/completions";
+        String apiKey = "Bearer " + openaiApiKey;
+
+        RestTemplate restTemplate = new RestTemplate();
+
+        JSONObject requestBody = new JSONObject();
+        requestBody.put("model", "gpt-4o-mini");
+        requestBody.put("messages", List.of(
+                new JSONObject().put("role", "user").put("content", prompt)
+        ));
+        System.out.println(requestBody.toString());
+        requestBody.put("temperature", 0.7);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("Authorization", apiKey);
+
+        HttpEntity<String> entity = new HttpEntity<>(requestBody.toString(), headers);
+
+        try {
+            ResponseEntity<String> response = restTemplate.postForEntity(apiUrl, entity, String.class);
+            JSONObject responseJson = new JSONObject(response.getBody());
+            String content = responseJson
+                    .getJSONArray("choices")
+                    .getJSONObject(0)
+                    .getJSONObject("message")
+                    .getString("content");
+            return content;
+        } catch (Exception e) {
+            // 에러 처리: 필요에 따라 상세 로깅 및 예외 처리
+            return "{\"error\": \"GPT API 호출 실패\"}";
+        }
     }
 }
