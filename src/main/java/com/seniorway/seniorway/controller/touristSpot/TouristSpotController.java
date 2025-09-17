@@ -70,13 +70,14 @@ public class TouristSpotController {
     public ResponseEntity<?> getBarrierFreeTouristSpots() {
         try {
             var spots = touristSpotService.findBarrierFreeTouristSpots();
-            // contentId, title, contentTypeId만 추출해서 반환
+            // contentId, title, contentTypeId, firstImage만 추출해서 반환
             var result = spots.stream()
                     .map(spot -> {
                         var map = new java.util.HashMap<String, Object>();
                         map.put("contentId", spot.getContentId());
                         map.put("title", spot.getTitle());
                         map.put("contentTypeId", spot.getContentTypeId());
+                        map.put("firstImage", spot.getFirstimage());
                         return map;
                     })
                     .toList();
