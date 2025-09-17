@@ -14,4 +14,7 @@ public interface ScheduleService {
 
     // 일정 목록 조회
     Object getScheduleList(String userEmail);
+
+    // 일정 삭제
+    void deleteSchedule(Long scheduleId, String userEmail);
 }

@@ -7,6 +7,7 @@ import com.seniorway.seniorway.service.schedule.ScheduleService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -65,5 +66,16 @@ public class ScheduleController {
 
         String userEmail = userDetails.getUsername();
         return ResponseEntity.ok(scheduleService.getScheduleList(userEmail));
+    }
+
+    // 일정 삭제 API 추가
+    @DeleteMapping("/{scheduleId}")
+    public ResponseEntity<?> deleteSchedule(
+            @PathVariable Long scheduleId,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        String userEmail = userDetails.getUsername();
+        scheduleService.deleteSchedule(scheduleId, userEmail);
+        return ResponseEntity.ok().build();
     }
 }

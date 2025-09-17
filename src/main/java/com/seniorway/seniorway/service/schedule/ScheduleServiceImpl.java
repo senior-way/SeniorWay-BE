@@ -392,4 +392,24 @@ public class ScheduleServiceImpl implements ScheduleService {
                 })
                 .toList();
     }
+
+    @Override
+    public void deleteSchedule(Long scheduleId, String userEmail) {
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        ScheduleEntity schedule = scheduleRepository.findById(scheduleId)
+                .orElseThrow(() -> new CustomException(ErrorCode.SCHEDULE_NOT_FOUND));
+
+        if (!schedule.getUser().getId().equals(user.getId())) {
+            throw new CustomException(ErrorCode.FORBIDDEN);
+        }
+
+        // 일정에 속한 관광지 먼저 삭제
+        List<ScheduleTouristSpotEntity> spots = scheduleTouristSpotRepository.findBySchedule(schedule);
+        scheduleTouristSpotRepository.deleteAll(spots);
+
+        // 일정 삭제
+        scheduleRepository.delete(schedule);
+    }
 }
