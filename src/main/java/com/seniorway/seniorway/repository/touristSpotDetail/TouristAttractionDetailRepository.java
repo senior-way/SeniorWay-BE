@@ -7,4 +7,6 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface TouristAttractionDetailRepository extends JpaRepository<TouristAttractionDetailEntity, Integer> {
     boolean existsByContentId(String contentId);
+
+    TouristAttractionDetailEntity findByContentId(String contentId);
 }

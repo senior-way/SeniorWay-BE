@@ -27,7 +27,7 @@ public class FoodDetailEntity {
     })
     private TouristSpotEntity touristSpot;
 
-    @Column(length = 50)
+    @Column(length = 200)
     private String seatInfo;
 
     @Column(length = 20)
@@ -39,10 +39,10 @@ public class FoodDetailEntity {
     @Lob
     private String treatMenu;
 
-    @Column(length = 10)
+    @Column(length = 200)
     private String smokingAllowed;
 
-    @Column(length = 10)
+    @Column(length = 200)
     private String packingAvailable;
 
     @Column(length = 50)
@@ -51,6 +51,6 @@ public class FoodDetailEntity {
     @Column(length = 100)
     private String scale;
 
-    @Column(length = 50)
+    @Column(length = 200)
     private String parkingAvailable;
 }

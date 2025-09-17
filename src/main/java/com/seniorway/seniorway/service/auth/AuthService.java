@@ -1,11 +1,11 @@
 package com.seniorway.seniorway.service.auth;
 
+import com.seniorway.seniorway.dto.auth.GuardianSignUpRequestsDTO;
 import com.seniorway.seniorway.enums.error.ErrorCode;
 import com.seniorway.seniorway.enums.user.Role;
 import com.seniorway.seniorway.exception.CustomException;
 import com.seniorway.seniorway.jwt.JwtTokenProvider;
 import com.seniorway.seniorway.dto.auth.UserLoginRequestsDTO;
-import com.seniorway.seniorway.dto.auth.UserLoginResponseDTO;
 import com.seniorway.seniorway.dto.auth.UserSignUpRequestsDTO;
 import com.seniorway.seniorway.entity.user.User;
 import com.seniorway.seniorway.repository.user.UserRepository;
@@ -74,7 +74,7 @@ public class AuthService implements UserDetailsService {
      * @return 생성된 사용자의 JWT 토큰
      * @throws CustomException 이메일이 이미 존재하는 경우
      */
-    public String signUp(UserSignUpRequestsDTO userSignUpRequestsDto) {
+    public String signup(UserSignUpRequestsDTO userSignUpRequestsDto) {
         String email = userSignUpRequestsDto.getEmail().toLowerCase(); // 소문자 통일
         
         if (userRepository.existsByEmail(email)) {
@@ -85,7 +85,39 @@ public class AuthService implements UserDetailsService {
                 .username(userSignUpRequestsDto.getUsername())
                 .email(email) // 소문자로 변환된 email을 저장
                 .password(passwordEncoder.encode(userSignUpRequestsDto.getPassword()))
-                .role(Role.USER)  // TODO: 기본 권한 USER로 설정, 추후 변경 필요
+                .birth(userSignUpRequestsDto.getBirth())
+                .role(Role.USER)
+                .build();
+
+        User savedUser = userRepository.save(user);
+        return jwtTokenProvider.createToken(savedUser.getId(), savedUser.getEmail(), savedUser.getRole());
+    }
+
+    /**
+     * 보호자 회원가입 요청을 처리하는 메서드
+     *
+     * <p>
+     *     전달받은 보호자 정보를 기반으로 새로운 보호자 사용자를 생성하고 저장
+     *     이메일이 이미 존재하는 경우 예외를 발생시킴
+     *     성공적으로 저장된 사용자의 ID, 이메일, 권한을 포함하는 JWT 토큰을 반환
+     * </p>
+     *
+     * @param guardianSignUpRequestsDto 보호자 회원가입 요청 DTO (이메일, 비밀번호, 사용자명 포함)
+     * @return 생성된 보호자 사용자의 JWT 토큰
+     * @throws CustomException 이메일이 이미 존재하는 경우
+     */
+    public String guardianSignup(GuardianSignUpRequestsDTO guardianSignUpRequestsDto) {
+        String email = guardianSignUpRequestsDto.getEmail().toLowerCase(); // 소문자 통일
+
+        if (userRepository.existsByEmail(email)) {
+            throw new CustomException(ErrorCode.AUTH_EMAIL_EXISTS);
+        }
+
+        User user = User.builder()
+                .username(guardianSignUpRequestsDto.getUsername())
+                .email(email) // 소문자로 변환된 email을 저장
+                .password(passwordEncoder.encode(guardianSignUpRequestsDto.getPassword()))
+                .role(Role.GUARDIANS)
                 .build();
 
         User savedUser = userRepository.save(user);

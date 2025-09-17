@@ -1,24 +1,34 @@
 package com.seniorway.seniorway.service.alarm;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.seniorway.seniorway.dto.location.SpotPointDto;
 import com.seniorway.seniorway.entity.location.UserLocation;
 import com.seniorway.seniorway.entity.schedule.ScheduleEntity;
 import com.seniorway.seniorway.entity.user.User;
 import com.seniorway.seniorway.entity.user.UserGuardianLinkEntity;
+import com.seniorway.seniorway.enums.error.ErrorCode;
+import com.seniorway.seniorway.exception.CustomException;
 import com.seniorway.seniorway.repository.location.UserLocationRepository;
 import com.seniorway.seniorway.repository.schedule.ScheduleRepository;
 import com.seniorway.seniorway.repository.schedule.ScheduleTouristSpotRepository;
 import com.seniorway.seniorway.repository.user.UserGuardianLinkRepository;
 import com.seniorway.seniorway.repository.user.UserRepository;
+import jakarta.mail.internet.MimeMessage;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -41,6 +51,7 @@ public class AlarmServiceImpl implements AlarmService {
     private final ScheduleTouristSpotRepository scheduleTouristSpotRepository;
     private final UserGuardianLinkRepository userGuardianLinkRepository;
     private final UserLocationRepository userLocationRepository;
+    private final ObjectMapper objectMapper;
 
     @Value("${spring.mail.username}")
     private String fromEmail;
@@ -166,8 +177,8 @@ public class AlarmServiceImpl implements AlarmService {
         String key = "invite:" + token;
 
         String payload = """
-            {"wardUserId":%d,"guardianEmail":"%s"}
-            """.formatted(wardUserId, email);
+                {"wardUserId":%d,"guardianEmail":"%s"}
+                """.formatted(wardUserId, email);
 
         // NX + EX
         Boolean ok = redisTemplate.opsForValue().setIfAbsent(key, payload, INVITE_TTL);
@@ -175,46 +186,95 @@ public class AlarmServiceImpl implements AlarmService {
             throw new IllegalStateException("초대 토큰 생성에 실패했습니다.");
         }
 
-        String acceptUrl = "%s/invite/accept?token=%s".formatted(frontendBaseUrl, token);
+        String encodedToken = URLEncoder.encode(token, StandardCharsets.UTF_8);
+        String acceptUrl = "%s/invite/accept?token=%s".formatted(frontendBaseUrl, encodedToken);
 
-        SimpleMailMessage msg = new SimpleMailMessage();
-        msg.setTo(email);
-        msg.setSubject("[SeniorWay] 보호자 초대 수락 안내");
-        msg.setText("""
+        String plain = """
                 안녕하세요. 보호자로 초대되었습니다.
-
+                
                 아래 링크를 클릭해 72시간 내 수락을 완료해 주세요:
                 %s
-
+                
                 본 메일이 본인과 무관하다면 무시하셔도 됩니다.
-                """.formatted(acceptUrl));
+                """.formatted(acceptUrl);
 
-        mailSender.send(msg);
-        log.info("Invite mail sent via Redis token. ward={}, to={}", wardUserId, email);
+        // 2) HTML (버튼/스타일)
+        String html = """
+                <div style="font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;line-height:1.6;color:#111827">
+                  <p>안녕하세요. 보호자로 초대되었습니다.</p>
+                  <p>아래 버튼을 눌러 <b>72시간</b> 내 수락을 완료해 주세요.</p>
+                  <p>
+                    <a href="%1$s" target="_blank"
+                       style="display:inline-block;padding:12px 18px;background:#4f46e5;color:#ffffff;
+                              text-decoration:none;border-radius:8px;font-weight:600;">
+                      초대 수락하기
+                    </a>
+                  </p>
+                  <p style="font-size:12px;color:#6b7280">
+                    버튼이 보이지 않으면 이 링크를 복사해 브라우저에 붙여넣어 주세요:<br>
+                    <span>%1$s</span>
+                  </p>
+                </div>
+                """.formatted(acceptUrl);
+
+        try {
+            MimeMessage mime = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(
+                    mime,
+                    MimeMessageHelper.MULTIPART_MODE_MIXED_RELATED,
+                    StandardCharsets.UTF_8.name()
+            );
+            helper.setFrom(fromEmail);
+            helper.setTo(email);
+            helper.setSubject("[SeniorWay] 보호자 초대 수락 안내");
+
+            // Spring 6+ 는 setText(plain, html) 지원. (구버전이면 setText(html, true)만 써도 됨)
+            helper.setText(plain, html);
+
+            mailSender.send(mime);
+            log.info("Invite mail (HTML) sent. ward={}, to={}", wardUserId, email);
+        } catch (Exception e) {
+            log.error("Failed to send mail to {}", email, e);
+        }
     }
 
     @Override
     @Transactional
     public void accept(String token, Long guardianUserId) {
-        String key = "invite:" + token;
-        String payload = redisTemplate.opsForValue().getAndDelete(key);
-        if (payload == null) throw new IllegalArgumentException("토큰이 유효하지 않습니다.");
-
-        String[] parts = payload.split(":");
-        Long wardUserId = Long.valueOf(parts[0]);
-
-        User ward = userRepository.findById(wardUserId).orElseThrow();
-        User guardian = userRepository.findById(guardianUserId).orElseThrow();
-
-        if (!userGuardianLinkRepository.existsByUser_IdAndGuardian_Id(ward.getId(), guardian.getId())) {
-            userGuardianLinkRepository.save(UserGuardianLinkEntity.builder()
-                    .user(ward)
-                    .guardian(guardian)
-                    .relation("보호자")
-                    .isPrimary(false)
-                    .createdAt(LocalDateTime.now())
-                    .build());
+        if (guardianUserId == null) {
+            throw new CustomException(ErrorCode.AUTH_TOKEN_INVALID, "로그인이 필요합니다."); // 401로 매핑
         }
+
+        String key = "invite:" + token;
+        String payload = redisTemplate.opsForValue().get(key);
+        if (payload == null) {
+            throw new CustomException(ErrorCode.EMAIL_CODE_EXPIRED, "토큰이 유효하지 않거나 만료되었습니다."); // 400로 매핑
+        }
+
+        long wardUserId = extractWardUserId(payload);
+
+        User ward = userRepository.findById(wardUserId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND, "피보호자 정보를 찾을 수 없습니다."));
+        User guardian = userRepository.findById(guardianUserId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND, "보호자 정보를 찾을 수 없습니다."));
+
+        try {
+            if (!userGuardianLinkRepository.existsByUserIdAndGuardianId(ward.getId(), guardian.getId())) {
+                userGuardianLinkRepository.save(UserGuardianLinkEntity.builder()
+                        .user(ward)
+                        .guardian(guardian)
+                        .createdAt(LocalDateTime.now())
+                        .build());
+            }
+        } catch (DataIntegrityViolationException e) {
+            log.info("link already exists (race tolerated): user={}, guardian={}", ward.getId(), guardian.getId());
+        }
+        org.springframework.transaction.support.TransactionSynchronizationManager
+                .registerSynchronization(new org.springframework.transaction.support.TransactionSynchronization() {
+                    @Override public void afterCommit() { redisTemplate.delete(key); }
+                });
+
+        log.info("[INVITE_ACCEPT] success wardId={} guardianId={}", ward.getId(), guardian.getId());
     }
 
     // 문자열 좌표 안전 파싱
@@ -239,4 +299,45 @@ public class AlarmServiceImpl implements AlarmService {
         return R * c;
     }
 
+    private long extractWardUserId(String payload) {
+        // 1) JSON 우선
+        try {
+            JsonNode root = objectMapper.readTree(payload);
+            JsonNode node = root.get("wardUserId");
+            if (node != null && node.canConvertToLong()) {
+                return node.asLong();
+            }
+        } catch (JsonProcessingException ignore) {
+            // JSON 아님 → 아래 fallbacks
+        }
+
+        // 2) 숫자만 저장된 경우
+        String trimmed = payload.trim();
+        if (trimmed.chars().allMatch(Character::isDigit)) {
+            return Long.parseLong(trimmed);
+        }
+
+        // 3) "123:..." 구형 포맷 대응
+        int colon = trimmed.indexOf(':');
+        if (colon > 0) {
+            String left = trimmed.substring(0, colon).trim();
+            if (left.chars().allMatch(Character::isDigit)) {
+                return Long.parseLong(left);
+            }
+        }
+
+        // 형식 불일치
+        throw new CustomException(ErrorCode.INVALID_INPUT, "토큰에 잘못된 사용자 ID가 포함되어 있습니다.");
+    }
+
+    // (선택) 이메일 추출이 필요하면
+    @SuppressWarnings("unused")
+    private String extractGuardianEmail(String payload) {
+        try {
+            JsonNode root = objectMapper.readTree(payload);
+            JsonNode node = root.get("guardianEmail");
+            if (node != null && !node.isNull()) return node.asText();
+        } catch (JsonProcessingException ignore) {}
+        return null;
+    }
 }

@@ -13,6 +13,10 @@ import com.seniorway.seniorway.repository.touristSpotDetail.LeisureSportsDetailR
 import com.seniorway.seniorway.repository.touristSpotDetail.PerformanceExhibitionDetailRepository;
 import com.seniorway.seniorway.repository.touristSpotDetail.ShoppingDetailRepository;
 import com.seniorway.seniorway.repository.touristSpotDetail.TouristAttractionDetailRepository;
+import com.seniorway.seniorway.repository.touristSpotDetail.WheelchairAccessRepository;
+import com.seniorway.seniorway.repository.touristSpotDetail.PetFriendlyInfoRepository;
+import com.seniorway.seniorway.entity.touristSpotDetail.WheelchairAccessEntity;
+import com.seniorway.seniorway.entity.touristSpotDetail.PetFriendlyEntity;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -38,10 +42,15 @@ public class TouristSpotService {
     private final PerformanceExhibitionDetailRepository performanceExhibitionDetailRepository;
     private final ShoppingDetailRepository shoppingDetailRepository;
     private final TouristAttractionDetailRepository touristAttractionDetailRepository;
+    private final WheelchairAccessRepository wheelchairAccessRepository;
+    private final PetFriendlyInfoRepository petFriendlyInfoRepository;
     private final Logger logger = LoggerFactory.getLogger(TouristSpotService.class);
 
     @Value("${KTO.KTO_TOUR_INFO_API_KEY}")
     private String apiKey;
+
+    @Value("${KTO.KTO_PET_TOUR_INFO_API_KEY}")
+    private String petApiKey;
 
     public void fetchAndSaveTouristSpots() {
         int pageNo = 1;
@@ -198,10 +207,10 @@ public class TouristSpotService {
     public void fetchAndSaveTouristSpotDetails() {
         var spots = touristSpotRepository.findAll();
         logger.info("[TouristSpotService] 관광지 상세정보 저장 시작. 대상 관광지 수: {}", spots.size());
-        int maxCount = 1000;
-        int processed = 0;
+        int maxApiCalls = 1000;
+        int apiCallCount = 0;
         for (TouristSpotEntity spot : spots) {
-            if (processed >= maxCount) break;
+            if (apiCallCount >= maxApiCalls) break;
             String contentId = spot.getContentId();
             String contentTypeId = spot.getContentTypeId();
 
@@ -268,6 +277,8 @@ public class TouristSpotService {
                     if (br != null) try { br.close(); } catch (Exception ignore) {}
                     if (conn != null) conn.disconnect();
                 }
+
+                apiCallCount++; // 실제 API 호출이 성공적으로 끝난 경우에만 증가
 
                 String response = result.toString();
                 JSONObject json = new JSONObject(response);
@@ -430,8 +441,281 @@ public class TouristSpotService {
             } catch (Exception e) {
                 logger.error("[TouristSpotService] 상세정보 저장 실패: contentId={}, contentTypeId={}, error={}", contentId, contentTypeId, e.getMessage(), e);
             }
-            processed++;
         }
         logger.info("[TouristSpotService] 관광지 상세정보 저장 작업 완료");
+    }
+
+    /**
+     * 무장애 여행정보 저장 (contentTypeId=12,28,38,39)
+     */
+    public void fetchAndSaveWheelchairAccessInfo() {
+        var spots = touristSpotRepository.findAll();
+        logger.info("[TouristSpotService] 무장애 여행정보 저장 시작. 대상 관광지 수: {}", spots.size());
+        int savedCount = 0;
+        for (TouristSpotEntity spot : spots) {
+            String contentTypeId = spot.getContentTypeId();
+            if (!("12".equals(contentTypeId) || "28".equals(contentTypeId) || "38".equals(contentTypeId) || "39".equals(contentTypeId))) continue;
+            String contentId = spot.getContentId();
+            if (wheelchairAccessRepository.existsByContentId(contentId)) {
+                WheelchairAccessEntity entity = wheelchairAccessRepository.findByContentId(contentId);
+                int isBarrierFree = (entity.getExitInfo() != null && !entity.getExitInfo().isBlank()) ? 1 : 0;
+                if ((entity.getBarrierFree() == null ? 0 : (entity.getBarrierFree() ? 1 : 0)) != isBarrierFree) {
+                    entity.setBarrierFree(isBarrierFree == 1);
+                    wheelchairAccessRepository.save(entity);
+                    logger.info("[TouristSpotService] 무장애 정보 barrierFree 컬럼만 수정: contentId={}, barrierFree={}", contentId, isBarrierFree);
+                } else {
+                    logger.info("[TouristSpotService] 이미 무장애 정보가 저장되어 있고 barrierFree도 일치: contentId={}", contentId);
+                }
+                continue;
+            }
+            try {
+                String encodedApiKey = URLEncoder.encode(apiKey, StandardCharsets.UTF_8);
+                String urlStr = "https://apis.data.go.kr/B551011/KorWithService2/detailWithTour2"
+                        + "?serviceKey=" + encodedApiKey
+                        + "&MobileOS=WEB"
+                        + "&MobileApp=SeniorWay"
+                        + "&contentId=" + contentId
+                        + "&_type=json";
+                logger.info("[TouristSpotService] 무장애 API 호출: {}", urlStr);
+
+                BufferedReader br = null;
+                StringBuilder result = new StringBuilder();
+                java.net.HttpURLConnection conn = null;
+                try {
+                    URL url = new URL(urlStr);
+                    conn = (java.net.HttpURLConnection) url.openConnection();
+                    conn.setRequestMethod("GET");
+                    conn.setConnectTimeout(10000);
+                    conn.setReadTimeout(10000);
+                    int responseCode = conn.getResponseCode();
+                    if (responseCode == java.net.HttpURLConnection.HTTP_OK) {
+                        br = new BufferedReader(new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8));
+                        String line;
+                        while ((line = br.readLine()) != null) {
+                            result.append(line);
+                        }
+                        logger.debug("[TouristSpotService] 무장애 API 응답 수신 성공: contentId={}", contentId);
+                    } else {
+                        logger.error("[TouristSpotService] 무장애 API 호출 실패: HTTP {}", responseCode);
+                        continue;
+                    }
+                } finally {
+                    if (br != null) try { br.close(); } catch (Exception ignore) {}
+                    if (conn != null) conn.disconnect();
+                }
+
+                String response = result.toString();
+                JSONObject json = new JSONObject(response);
+                JSONObject body = json.optJSONObject("response") != null ? json.getJSONObject("response").optJSONObject("body") : null;
+                if (body == null || !body.has("items")) {
+                    logger.warn("[TouristSpotService] 무장애 응답에 body/items 없음: contentId={}", contentId);
+                    continue;
+                }
+                JSONObject items = body.getJSONObject("items");
+                if (!items.has("item")) {
+                    logger.warn("[TouristSpotService] 무장애 응답에 item 없음: contentId={}", contentId);
+                    continue;
+                }
+                JSONObject item;
+                if (items.optJSONArray("item") != null) {
+                    item = items.getJSONArray("item").getJSONObject(0);
+                } else {
+                    item = items.getJSONObject("item");
+                }
+                if (item == null) continue;
+
+                WheelchairAccessEntity entity = new WheelchairAccessEntity();
+                entity.setContentId(contentId);
+                entity.setParking(item.optString("parking", null));
+                entity.setRoute(item.optString("route", null));
+                String exitInfo = item.optString("exit", null);
+                entity.setExitInfo(exitInfo);
+                entity.setElevator(item.optString("elevator", null));
+                entity.setRestroom(item.optString("restroom", null));
+                entity.setBarrierFree(exitInfo != null && !exitInfo.isBlank() ? true : false); // 1(true) or 0(false)
+                wheelchairAccessRepository.save(entity);
+                savedCount++;
+                logger.info("[TouristSpotService] 무장애 정보 저장 완료: contentId={}, barrierFree={}", contentId, entity.getBarrierFree() ? 1 : 0);
+            } catch (Exception e) {
+                logger.error("[TouristSpotService] 무장애 정보 저장 실패: contentId={}, error={}", spot.getContentId(), e.getMessage(), e);
+            }
+        }
+        logger.info("[TouristSpotService] 무장애 여행정보 저장 완료. 저장 건수: {}", savedCount);
+    }
+
+    /**
+     * 반려동물 여행정보 저장 (contentTypeId=12,28,38,39)
+     */
+    public void fetchAndSavePetFriendlyInfo() {
+        var spots = touristSpotRepository.findAll();
+        logger.info("[TouristSpotService] 반려동물 여행정보 저장 시작. 대상 관광지 수: {}", spots.size());
+        int savedCount = 0;
+        for (TouristSpotEntity spot : spots) {
+            String contentTypeId = spot.getContentTypeId();
+            if (!("12".equals(contentTypeId) || "28".equals(contentTypeId) || "38".equals(contentTypeId) || "39".equals(contentTypeId))) continue;
+            String contentId = spot.getContentId();
+            if (petFriendlyInfoRepository.existsByContentId(contentId)) {
+                logger.info("[TouristSpotService] 이미 반려동물 정보가 저장된 contentId={}", contentId);
+                continue;
+            }
+            try {
+                String encodedApiKey = URLEncoder.encode(petApiKey, StandardCharsets.UTF_8);
+                String urlStr = "https://apis.data.go.kr/B551011/KorPetTourService/detailPetTour"
+                        + "?serviceKey=" + encodedApiKey
+                        + "&MobileOS=WEB"
+                        + "&MobileApp=SeniorWay"
+                        + "&contentId=" + contentId
+                        + "&_type=json";
+                logger.info("[TouristSpotService] 반려동물 API 호출: {}", urlStr);
+
+                BufferedReader br = null;
+                StringBuilder result = new StringBuilder();
+                java.net.HttpURLConnection conn = null;
+                try {
+                    URL url = new URL(urlStr);
+                    conn = (java.net.HttpURLConnection) url.openConnection();
+                    conn.setRequestMethod("GET");
+                    conn.setConnectTimeout(10000);
+                    conn.setReadTimeout(10000);
+                    int responseCode = conn.getResponseCode();
+                    if (responseCode == java.net.HttpURLConnection.HTTP_OK) {
+                        br = new BufferedReader(new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8));
+                        String line;
+                        while ((line = br.readLine()) != null) {
+                            result.append(line);
+                        }
+                        logger.debug("[TouristSpotService] 반려동물 API 응답 수신 성공: contentId={}", contentId);
+                    } else {
+                        logger.error("[TouristSpotService] 반려동물 API 호출 실패: HTTP {}", responseCode);
+                        continue;
+                    }
+                } finally {
+                    if (br != null) try { br.close(); } catch (Exception ignore) {}
+                    if (conn != null) conn.disconnect();
+                }
+
+                String response = result.toString();
+                JSONObject json = new JSONObject(response);
+                JSONObject body = json.optJSONObject("response") != null ? json.getJSONObject("response").optJSONObject("body") : null;
+                if (body == null || !body.has("items")) {
+                    logger.warn("[TouristSpotService] 반려동물 응답에 body/items 없음: contentId={}", contentId);
+                    continue;
+                }
+                JSONObject items = body.getJSONObject("items");
+                if (!items.has("item")) {
+                    logger.warn("[TouristSpotService] 반려동물 응답에 item 없음: contentId={}", contentId);
+                    continue;
+                }
+                JSONObject item;
+                if (items.optJSONArray("item") != null) {
+                    item = items.getJSONArray("item").getJSONObject(0);
+                } else {
+                    item = items.getJSONObject("item");
+                }
+                if (item == null) continue;
+
+                PetFriendlyEntity entity = new PetFriendlyEntity();
+                entity.setContentId(contentId);
+                entity.setAcmpyNeedMtr(item.optString("acmpyNeedMtr", null));
+                entity.setRelaAcdntRiskMtr(item.optString("relaAcdntRiskMtr", null));
+                entity.setAcmpyTypeCd(item.optString("acmpyTypeCd", null));
+                entity.setRelaPosesFclty(item.optString("relaPosesFclty", null));
+                entity.setRelaFrnshPrdlst(item.optString("relaFrnshPrdlst", null));
+                entity.setEtcAcmpyInfo(item.optString("etcAcmpyInfo", null));
+                entity.setRelaPurcPrdlst(item.optString("relaPurcPrdlst", null));
+                entity.setAcmpyPsblCpam(item.optString("acmpyPsblCpam", null));
+                entity.setRelaRntlPrdlst(item.optString("relaRntlPrdlst", null));
+                petFriendlyInfoRepository.save(entity);
+                savedCount++;
+                logger.info("[TouristSpotService] 반려동물 정보 저장 완료: contentId={}", contentId);
+            } catch (Exception e) {
+                logger.error("[TouristSpotService] 반려동물 정보 저장 실패: contentId={}, error={}", spot.getContentId(), e.getMessage(), e);
+            }
+        }
+        logger.info("[TouristSpotService] 반려동물 여행정보 저장 완료. 저장 건수: {}", savedCount);
+    }
+
+    public TouristSpotEntity findTouristSpotByContentId(String contentId) {
+        return touristSpotRepository.findByContentId(contentId);
+    }
+
+    public Object getTouristSpotDetailDto(String contentId, String contentTypeId) {
+        TouristSpotEntity spot = touristSpotRepository.findByContentId(contentId);
+        if (spot == null) return null;
+
+        JSONObject result = new JSONObject();
+        result.put("spot", spot);
+
+        Object detail = null;
+        switch (contentTypeId) {
+            case "12":
+                var ta = touristAttractionDetailRepository.findByContentId(contentId);
+                if (ta != null) {
+                    JSONObject detailJson = new JSONObject(ta);
+                    detailJson.remove("touristSpot");
+                    detail = detailJson.toMap();
+                }
+                break;
+            case "14":
+                var pe = performanceExhibitionDetailRepository.findByContentId(contentId);
+                if (pe != null) {
+                    JSONObject detailJson = new JSONObject(pe);
+                    detailJson.remove("touristSpot");
+                    detail = detailJson.toMap();
+                }
+                break;
+            case "28":
+                var ls = leisureSportsDetailRepository.findByContentId(contentId);
+                if (ls != null) {
+                    JSONObject detailJson = new JSONObject(ls);
+                    detailJson.remove("touristSpot");
+                    detail = detailJson.toMap();
+                }
+                break;
+            case "38":
+                var sh = shoppingDetailRepository.findByContentId(contentId);
+                if (sh != null) {
+                    JSONObject detailJson = new JSONObject(sh);
+                    detailJson.remove("touristSpot");
+                    detail = detailJson.toMap();
+                }
+                break;
+            case "39":
+                var fd = foodDetailRepository.findByContentId(contentId);
+                if (fd != null) {
+                    JSONObject detailJson = new JSONObject(fd);
+                    detailJson.remove("touristSpot");
+                    detail = detailJson.toMap();
+                }
+                break;
+            default:
+                break;
+        }
+        if (detail != null) result.put("detail", detail);
+
+        WheelchairAccessEntity wheelchair = wheelchairAccessRepository.findByContentId(contentId);
+        if (wheelchair != null && Boolean.TRUE.equals(wheelchair.getBarrierFree())) {
+            result.put("wheelchairAccess", wheelchair);
+        }
+
+        // 반려동물 정보
+        PetFriendlyEntity pet = petFriendlyInfoRepository.existsByContentId(contentId)
+                ? petFriendlyInfoRepository.findByContentId(contentId)
+                : null;
+        if (pet != null) {
+            result.put("petFriendly", pet);
+        }
+
+        return result.toMap();
+    }
+
+    public java.util.List<TouristSpotEntity> findBarrierFreeTouristSpots() {
+        // barrierFree가 true인 WheelchairAccessEntity의 contentId 목록 조회
+        var barrierFreeIds = wheelchairAccessRepository.findAll().stream()
+                .filter(w -> Boolean.TRUE.equals(w.getBarrierFree()))
+                .map(w -> w.getContentId())
+                .toList();
+        // 해당 contentId에 해당하는 TouristSpotEntity 목록 반환
+        return touristSpotRepository.findAllByContentIdIn(barrierFreeIds);
     }
 }

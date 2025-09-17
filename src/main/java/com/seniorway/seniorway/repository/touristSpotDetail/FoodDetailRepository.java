@@ -7,4 +7,6 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface FoodDetailRepository extends JpaRepository<FoodDetailEntity, Integer> {
     boolean existsByContentId(String contentId);
+
+    FoodDetailEntity findByContentId(String contentId);
 }

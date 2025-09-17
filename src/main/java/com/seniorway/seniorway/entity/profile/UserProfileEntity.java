@@ -4,9 +4,10 @@ import com.seniorway.seniorway.entity.user.User;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
-@Table(name = "user_preferences")
+@Table(name = "user_profiles")
 @Getter
 @Setter
 @Builder
@@ -22,20 +23,28 @@ public class UserProfileEntity {
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     private User user;
 
-    @Column(name = "preffered_category", nullable = false)
-    private String preferredCategory;
+    // 복수 선택 (ElementCollection 활용)
+    @ElementCollection
+    @CollectionTable(name = "user_preferred_categories", joinColumns = @JoinColumn(name = "user_profile_id"))
+    @Column(name = "category")
+    private List<String> preferredCategories;
 
-    @Column(name = "preferred_transportation", nullable = false)
-    private String preferredTransportation;
+    @ElementCollection
+    @CollectionTable(name = "user_preferred_transportations", joinColumns = @JoinColumn(name = "user_profile_id"))
+    @Column(name = "transportation")
+    private List<String> preferredTransportations;
 
+    // 단일 선택 (boolean 권장)
     @Column(name = "wheelchair_usage", nullable = false)
-    private Integer wheelchairUsage;
+    private boolean wheelchairUsage;
 
     @Column(name = "pet_companion", nullable = false)
-    private Integer petCompanion;
+    private boolean petCompanion;
 
+    // Enum 사용
+    @Enumerated(EnumType.STRING)
     @Column(name = "digital_literacy", nullable = false)
-    private String digitalLiteracy;
+    private DigitalLiteracyLevel digitalLiteracy;
 
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

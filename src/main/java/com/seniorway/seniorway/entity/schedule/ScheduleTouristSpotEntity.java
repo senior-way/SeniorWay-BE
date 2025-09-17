@@ -1,8 +1,8 @@
 package com.seniorway.seniorway.entity.schedule;
 
 import com.seniorway.seniorway.entity.touristSpot.TouristSpotEntity;
+import com.seniorway.seniorway.entity.common.BaseTimeEntity;
 import jakarta.persistence.*;
-import java.time.LocalDateTime;
 import lombok.*;
 
 @Entity
@@ -12,7 +12,7 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class ScheduleTouristSpotEntity {
+public class ScheduleTouristSpotEntity extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -30,9 +30,9 @@ public class ScheduleTouristSpotEntity {
     @Column(name = "sequence_order", nullable = false)
     private Integer sequenceOrder;
 
-    @Column(name = "stay_time")
-    private Integer stayTime;
+    @Column(name = "visit_date")
+    private String visitDate; // YYYY-MM-DD 형식의 문자열
 
-    @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt;
+    @Column(name = "visit_time")
+    private String visitTime; // HH:MM 형식의 문자열
 }

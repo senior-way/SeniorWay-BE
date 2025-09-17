@@ -2,8 +2,6 @@ package com.seniorway.seniorway.service;
 
 import com.seniorway.seniorway.enums.user.Role;
 import com.seniorway.seniorway.jwt.JwtTokenProvider;
-import com.seniorway.seniorway.dto.auth.UserLoginRequestsDTO;
-import com.seniorway.seniorway.dto.auth.UserLoginResponseDTO;
 import com.seniorway.seniorway.dto.auth.UserSignUpRequestsDTO;
 import com.seniorway.seniorway.entity.user.User;
 import com.seniorway.seniorway.repository.user.UserRepository;
@@ -14,8 +12,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.security.crypto.password.PasswordEncoder;
-
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -90,7 +86,7 @@ class authServiceTest {
         when(jwtTokenProvider.createToken(2L, "test@email.com", Role.USER)).thenReturn("signupToken");
 
         // when
-        String token = authService.signUp(dto);
+        String token = authService.signup(dto);
 
         // then
         assertEquals("signupToken", token);

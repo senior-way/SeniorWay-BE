@@ -1,4 +1,4 @@
-package com.seniorway.seniorway.dto.user;
+package com.seniorway.seniorway.dto.profile;
 
 import lombok.Data;
 

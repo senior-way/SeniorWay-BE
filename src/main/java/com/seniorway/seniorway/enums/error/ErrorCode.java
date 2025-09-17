@@ -22,6 +22,9 @@ public enum ErrorCode {
     NO_GUARDIAN_LINK(HttpStatus.BAD_REQUEST, "연결된 보호자가 없습니다."),
     NO_LOCATION_DATA(HttpStatus.BAD_REQUEST, "해당 위치 데이터가 존재하지 않습니다."),
     HTTP_REQUEST_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "외부 API 요청 실패"),
+    INVALID_USER_ROLE(HttpStatus.BAD_REQUEST, "현재 사용자는 유저가 아닙니다"),
+    INVALID_GUARDIAN_ROLE(HttpStatus.BAD_REQUEST, "현재 사용자는 보호자가 아닙니다"),
+    BAD_REQUEST(HttpStatus.BAD_REQUEST, "잘못된 요청입니다."),
 
     // 401 Unauthorized
     AUTH_TOKEN_INVALID(HttpStatus.UNAUTHORIZED, "유효하지 않거나 만료된 토큰입니다."),
@@ -35,6 +38,13 @@ public enum ErrorCode {
     // 404 Not Found
     NOT_FOUND(HttpStatus.NOT_FOUND, "요청하신 리소스를 찾을 수 없습니다."),
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 유저입니다."),
+    USER_PROFILE_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 사용자 프로필입니다."),
+    USER_ROLE_NOT_FOUND(HttpStatus.NOT_FOUND, "유저의 권한 정보가 존재하지 않습니다."),
+    TOURIST_SPOT_BARRIER_FREE_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 관광지의 무장애 정보가 존재하지 않습니다."),
+    TOURIST_SPOT_PET_FRIENDLY_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 관광지의 반려동물 동반 정보가 존재하지 않습니다."),
+    SCHEDULE_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 일정입니다."),
+    SCHEDULE_SPOT_NOT_FOUND(HttpStatus.NOT_FOUND, "일정에 등록된 관광지가 없습니다."),
+
 
     // 500 Internal Server Error
     DATABASE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "DB 에러가 발생했습니다."),

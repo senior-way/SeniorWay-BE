@@ -1,8 +1,8 @@
 package com.seniorway.seniorway.entity.schedule;
 
 import com.seniorway.seniorway.entity.user.User;
+import com.seniorway.seniorway.entity.common.BaseTimeEntity;
 import jakarta.persistence.*;
-import java.time.LocalDateTime;
 import lombok.*;
 
 @Entity
@@ -12,7 +12,7 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class ScheduleEntity {
+public class ScheduleEntity extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -26,16 +26,4 @@ public class ScheduleEntity {
 
     @Column(name = "title", nullable = false, length = 100)
     private String title;
-
-    @Column(name = "start_date")
-    private LocalDateTime startDate;
-
-    @Column(name = "end_date")
-    private LocalDateTime endDate;
-
-    @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt;
-
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
 }

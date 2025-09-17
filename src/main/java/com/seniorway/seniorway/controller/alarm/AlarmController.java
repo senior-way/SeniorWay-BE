@@ -33,8 +33,9 @@ public class AlarmController {
     }
 
     @PostMapping("/guardian/invite")
-    public ResponseEntity<?> invite(@RequestParam Long wardUserId,
+    public ResponseEntity<?> invite(@AuthenticationPrincipal CustomUserDetails customUserDetails,
                                     @RequestParam String guardianEmail) {
+        Long wardUserId = customUserDetails.getUserId();
         alarmService.sendInvite(wardUserId, guardianEmail); // 토큰 생성 + 메일 발송
         return ResponseEntity.ok("초대 메일을 전송하였습니다.");
     }

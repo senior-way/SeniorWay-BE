@@ -42,10 +42,10 @@ public class LeisureSportsDetailEntity {
     @Column(length = 20)
     private String accomCount;
 
-    @Column(length = 50)
+    @Column(length = 200)
     private String restDate;
 
-    @Column(length = 100)
+    @Column(length = 200)
     private String useTime;
 
     @Column(length = 255)
@@ -54,7 +54,7 @@ public class LeisureSportsDetailEntity {
     @Column(length = 50)
     private String expAgeRange;
 
-    @Column(length = 50)
+    @Column(length = 200)
     private String parkingAvailable;
 
     @Column(length = 50)
