@@ -5,6 +5,8 @@ import com.seniorway.seniorway.enums.user.Role;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDate;
+
 @Entity
 @Table(name="users")
 @Getter
@@ -28,6 +30,9 @@ public class User {
 
     @Column(nullable = false)
     private String password;  // 일반 로그인은 암호화, Kakao는 "kakao" 같은 더미 문자열
+
+    @Column(nullable = false)
+    private LocalDate birth;
 
     // 프로필 사진 URL
     private String picture;
