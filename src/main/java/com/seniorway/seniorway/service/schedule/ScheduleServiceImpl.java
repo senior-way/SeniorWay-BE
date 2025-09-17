@@ -23,6 +23,8 @@ import org.springframework.web.client.RestTemplate;
 import org.json.JSONObject;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -293,5 +295,59 @@ public class ScheduleServiceImpl implements ScheduleService {
                 scheduleTouristSpotRepository.save(scheduleSpot);
             }
         }
+    }
+
+    @Override
+    public JsonNode getScheduleJson(Long scheduleId, String userEmail) {
+        // 사용자 인증 및 스케줄 소유권 확인
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        ScheduleEntity schedule = scheduleRepository.findById(scheduleId)
+                .orElseThrow(() -> new CustomException(ErrorCode.SCHEDULE_NOT_FOUND));
+
+        if (!schedule.getUser().getId().equals(user.getId())) {
+            throw new CustomException(ErrorCode.FORBIDDEN);
+        }
+
+        List<ScheduleTouristSpotEntity> spots = scheduleTouristSpotRepository.findBySchedule(schedule);
+
+        ObjectMapper mapper = new ObjectMapper();
+        ObjectNode result = mapper.createObjectNode();
+
+        // day별로 그룹화
+        var grouped = spots.stream()
+            .collect(Collectors.groupingBy(ScheduleTouristSpotEntity::getVisitDate));
+
+        // day1, day2, ... 순으로 정렬
+        List<String> sortedDayKeys = grouped.keySet().stream()
+            .sorted((a, b) -> {
+                try {
+                    int numA = Integer.parseInt(a.replaceAll("[^0-9]", ""));
+                    int numB = Integer.parseInt(b.replaceAll("[^0-9]", ""));
+                    return Integer.compare(numA, numB);
+                } catch (Exception e) {
+                    return a.compareTo(b);
+                }
+            })
+            .toList();
+
+        for (String dayKey : sortedDayKeys) {
+            List<ScheduleTouristSpotEntity> daySpots = grouped.get(dayKey);
+            ArrayNode dayArr = mapper.createArrayNode();
+            daySpots.stream()
+                .sorted((a, b) -> a.getSequenceOrder().compareTo(b.getSequenceOrder()))
+                .forEach(spot -> {
+                    ObjectNode item = mapper.createObjectNode();
+                    item.put("time", spot.getVisitTime());
+                    item.put("place", spot.getTouristSpot().getTitle());
+                    item.put("contentId", spot.getTouristSpot().getContentId());
+                    item.put("firstImage", spot.getTouristSpot().getFirstimage() != null ? spot.getTouristSpot().getFirstimage() : "");
+                    dayArr.add(item);
+                });
+            result.set(dayKey, dayArr);
+        }
+
+        return result;
     }
 }

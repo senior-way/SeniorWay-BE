@@ -8,4 +8,7 @@ public interface ScheduleService {
 
     // 일정 저장 메서드: 시작일, 끝나는날 제거
     void saveSchedule(String userEmail, String title, JsonNode scheduleJson);
+
+    // 저장된 일정 JSON 반환 메서드
+    JsonNode getScheduleJson(Long scheduleId, String userEmail);
 }

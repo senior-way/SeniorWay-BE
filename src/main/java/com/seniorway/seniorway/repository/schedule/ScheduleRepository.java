@@ -10,5 +10,7 @@ import java.util.List;
 public interface ScheduleRepository extends JpaRepository<ScheduleEntity, Long> {
     // user_id로 일정 리스트 조회
     List<ScheduleEntity> findByUserId(Long userId);
-}
 
+    // user와 title로 단일 일정 조회
+    ScheduleEntity findByUserIdAndTitle(Long userId, String title);
+}
