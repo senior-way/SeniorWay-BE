@@ -1,6 +1,8 @@
 package com.seniorway.seniorway.service.user;
 
 import com.seniorway.seniorway.entity.user.User;
+import com.seniorway.seniorway.enums.error.ErrorCode;
+import com.seniorway.seniorway.exception.CustomException;
 import com.seniorway.seniorway.repository.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -18,6 +20,11 @@ public class UserService {
 
     public Optional<User> findUserById(Long id) {
         return userRepository.findById(id);
+    }
+
+    public User getUserById(Long id) {
+        return userRepository.findById(id)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
     }
 }
 
