@@ -10,6 +10,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -28,5 +29,18 @@ public class ScheduleController {
         JsonNode responseNode = scheduleService.generateSchedulePrompt(requestDto, userEmail);
 
         return ResponseEntity.ok(responseNode);
+    }
+
+    // 일정 저장 API 추가
+    @PostMapping("/save")
+    public ResponseEntity<?> saveSchedule(
+            @RequestParam String title,
+            @RequestBody JsonNode scheduleJson,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        String userEmail = userDetails.getUsername();
+        scheduleService.saveSchedule(userEmail, title, scheduleJson);
+
+        return ResponseEntity.ok().build();
     }
 }
