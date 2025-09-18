@@ -76,8 +76,8 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-data-redis-reactive' // 선택, Reactive 사용 시
 	implementation 'io.lettuce:lettuce-core' // Redis client
 
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	runtimeOnly 'com.mysql:mysql-connector-j'
-	runtimeOnly 'mysql:mysql-connector-java' // MySQL RDS 연결용 드라이버 추가
 	implementation 'com.mysql:mysql-connector-j:8.1.0'
 }
 
