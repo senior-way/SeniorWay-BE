@@ -1,0 +1,368 @@
+package com.seniorway.seniorway.service.alarm;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.seniorway.seniorway.dto.location.SpotPointDto;
+import com.seniorway.seniorway.entity.location.UserLocation;
+import com.seniorway.seniorway.entity.schedule.ScheduleEntity;
+import com.seniorway.seniorway.entity.user.User;
+import com.seniorway.seniorway.entity.user.UserGuardianLinkEntity;
+import com.seniorway.seniorway.enums.error.ErrorCode;
+import com.seniorway.seniorway.exception.CustomException;
+import com.seniorway.seniorway.repository.location.UserLocationRepository;
+import com.seniorway.seniorway.repository.schedule.ScheduleRepository;
+import com.seniorway.seniorway.repository.schedule.ScheduleTouristSpotRepository;
+import com.seniorway.seniorway.repository.user.UserGuardianLinkRepository;
+import com.seniorway.seniorway.repository.user.UserRepository;
+import jakarta.mail.internet.MimeMessage;
+import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.stereotype.Service;
+
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.text.Normalizer;
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Locale;
+import java.util.Optional;
+import java.util.UUID;
+
+@Slf4j
+@Service
+@RequiredArgsConstructor
+public class AlarmServiceImpl implements AlarmService {
+
+    private static final double NEAR_THRESHOLD_M = 500.0;
+    private static final Duration THROTTLE_TTL = Duration.ofMinutes(30);
+    private static final Duration INVITE_TTL = Duration.ofHours(72);
+
+    private final StringRedisTemplate redisTemplate;
+    private final JavaMailSender mailSender;
+    private final UserRepository userRepository;
+    private final ScheduleRepository scheduleRepository;
+    private final ScheduleTouristSpotRepository scheduleTouristSpotRepository;
+    private final UserGuardianLinkRepository userGuardianLinkRepository;
+    private final UserLocationRepository userLocationRepository;
+    private final ObjectMapper objectMapper;
+
+    @Value("${spring.mail.username}")
+    private String fromEmail;
+
+    @Value("${app.frontend.base-url}")
+    private String frontendBaseUrl;
+
+    //현재 위치와 관광지 위치 비교해서 메일 발송
+    @Override
+    public void sendMail(Long userId){
+        // 유저 최신 위치
+        Optional<UserLocation> latestOpt = userLocationRepository.findTopByUserIdOrderByTimestampDesc(userId);
+        if (latestOpt.isEmpty()) {
+            log.warn("No latest UserLocation for userId={}", userId);
+            return;
+        }
+        UserLocation latest = latestOpt.get();
+        double userLat = latest.getLatitude();
+        double userLon = latest.getLongitude();
+
+        // 유저 스케줄별 관광지 좌표 조회
+        List<ScheduleEntity> scheduleList = scheduleRepository.findByUserId(userId);
+        boolean isNearAnySpot = false;
+        String nearMsg = null;
+
+        String throttleKey = null;
+
+        for (ScheduleEntity schedule : scheduleList) {
+            List<SpotPointDto> points = scheduleTouristSpotRepository.findPointsByScheduleId(schedule.getScheduleId());
+            for (SpotPointDto p : points) {
+                Double spotLon = parseDoubleSafe(p.getMapX());
+                Double spotLat = parseDoubleSafe(p.getMapY());
+                if (spotLon == null || spotLat == null) continue;
+
+                double distM = distanceMeters(userLat, userLon, spotLat, spotLon);
+                if (distM <= NEAR_THRESHOLD_M) {
+
+                    Long spotId = p.getTouristSpotId();
+                    if (spotId == null) continue;
+
+                    throttleKey = "mail:proximity:spot:" + userId + ":" + spotId;
+
+                    Boolean acquired = redisTemplate.opsForValue()
+                            .setIfAbsent(throttleKey, "1", THROTTLE_TTL);
+                    if (!Boolean.TRUE.equals(acquired)) {
+                        log.info("Skip mail (throttled): userId={} spotId={} TTL={}m",
+                                userId, spotId, THROTTLE_TTL.toMinutes());
+                        return;
+                    }
+
+                    isNearAnySpot = true;
+                    int seq = (p.getSequenceOrder() == null ? 0 : p.getSequenceOrder());
+                    nearMsg = String.format(
+                            "스케줄ID %d / 관광지ID %d (순서 %d)와 %.0f m 이내",
+                            schedule.getScheduleId(), spotId, seq, distM
+                    );
+                    break;
+                }
+            }
+            if (isNearAnySpot) break;
+        }
+
+        if (!isNearAnySpot) {
+            log.info("userId={} : 가까운 관광지 없음(> {} m)", userId, NEAR_THRESHOLD_M);
+            return;
+        }
+
+        // 보호자 목록에게 메일 발송
+        List<UserGuardianLinkEntity> guardianList = userGuardianLinkRepository.findByUserId(userId);
+        if (guardianList == null || guardianList.isEmpty()) {
+            if (throttleKey != null) {
+                redisTemplate.delete(throttleKey);
+                log.info("No guardians. throttle key cleared: {}", throttleKey);
+            }
+            return;
+        }
+
+        int success = 0;
+        for (UserGuardianLinkEntity link : guardianList) {
+            User guardian = link.getGuardian();
+            if (guardian == null || guardian.getEmail() == null) continue;
+
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setFrom(fromEmail);
+            message.setTo(guardian.getEmail());
+            message.setSubject("[SeniorWay] 피보호자 위치 알림");
+            message.setText(
+                    "피보호자분의 현재 위치가 등록된 관광지 반경 500m 이내입니다.\n\n" +
+                            "정보: " + nearMsg + "\n" +
+                            String.format("현재 좌표: lat=%.6f, lon=%.6f\n", userLat, userLon) +
+                            "확인 부탁드립니다."
+            );
+            try {
+                mailSender.send(message);
+                success++;
+                log.info("Guardian mail sent to {}", guardian.getEmail());
+            } catch (Exception e) {
+                log.error("Failed to send mail to {}", guardian.getEmail(), e);
+            }
+        }
+        if (success == 0 && throttleKey != null) {
+            redisTemplate.delete(throttleKey);
+            log.info("All mails failed. throttle key cleared: {}", throttleKey);
+        }
+    }
+
+    // 테스트용
+    @Override
+    public void sendTestMail(String toEmail) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom(fromEmail);
+        message.setTo(toEmail);
+        message.setSubject("[SeniorWay] 테스트 메일");
+        message.setText("이것은 테스트 이메일 받았다면 정상 작동중.");
+
+        mailSender.send(message);
+    }
+
+    // 초대 메일 발송
+    public void sendInvite(Long guardianUserId, String wardEmail,String wardName) {
+        String email = wardEmail.trim().toLowerCase();
+        String token = UUID.randomUUID().toString();
+        String key = "invite:" + token;
+
+        var node = objectMapper.createObjectNode();
+        node.put("guardianUserId", guardianUserId);
+        node.put("wardEmail", email);
+        if (wardName != null && !wardName.isBlank()) {
+            node.put("wardName", wardName.trim());
+        }
+        String payload;
+        try {
+            payload = objectMapper.writeValueAsString(node);
+        } catch (Exception e) {
+            throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR, "초대 데이터 생성 실패");
+        }
+
+        Boolean ok = redisTemplate.opsForValue().setIfAbsent(key, payload, INVITE_TTL);
+        if (Boolean.FALSE.equals(ok)) {
+            throw new IllegalStateException("초대 토큰 생성에 실패했습니다.");
+        }
+
+        String encodedToken = URLEncoder.encode(token, StandardCharsets.UTF_8);
+        String acceptUrl = "%s/v2/guardian/invite/accept?token=%s".formatted(frontendBaseUrl, encodedToken);
+
+        String greetingName = (wardName != null && !wardName.isBlank()) ? wardName.trim() : null;
+
+        String plain = (greetingName == null)
+                ? """
+           안녕하세요. SeniorWay 연동 초대가 도착했습니다.
+
+           아래 링크를 클릭해 72시간 내 연동 수락을 완료해 주세요:
+           %s
+
+           본 메일이 본인과 무관하다면 무시하셔도 됩니다.
+           """.formatted(acceptUrl)
+                : """
+           %s 님, 안녕하세요. SeniorWay 연동 초대가 도착했습니다.
+
+           아래 링크를 클릭해 72시간 내 연동 수락을 완료해 주세요:
+           %s
+
+           본 메일이 본인과 무관하다면 무시하셔도 됩니다.
+           """.formatted(greetingName, acceptUrl);
+
+        String html = """
+            <div style="font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;line-height:1.6;color:#111827">
+              <p>안녕하세요. SeniorWay 연동 초대가 도착했습니다.</p>
+              <p>아래 버튼을 눌러 <b>72시간</b> 내 수락을 완료해 주세요.</p>
+              <p>
+                <a href="%1$s" target="_blank"
+                   style="display:inline-block;padding:12px 18px;background:#4f46e5;color:#ffffff;
+                          text-decoration:none;border-radius:8px;font-weight:600;">
+                  초대 수락하기
+                </a>
+              </p>
+              <p style="font-size:12px;color:#6b7280">
+                버튼이 보이지 않으면 이 링크를 복사해 브라우저에 붙여넣어 주세요:<br>
+                <span>%1$s</span>
+              </p>
+            </div>
+            """.formatted(acceptUrl);
+
+        try {
+            MimeMessage mime = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(
+                    mime,
+                    MimeMessageHelper.MULTIPART_MODE_MIXED_RELATED,
+                    StandardCharsets.UTF_8.name()
+            );
+            helper.setFrom(fromEmail);
+            helper.setTo(email);
+            helper.setSubject("[SeniorWay] 연동 초대 수락 안내");
+            helper.setText(plain, html);
+            mailSender.send(mime);
+            log.info("Invite mail sent (guardian -> ward). guardian={}, toWard={}", guardianUserId, email);
+        } catch (Exception e) {
+            log.error("Failed to send invite mail to ward {}", email, e);
+        }
+    }
+
+    @Override
+    @Transactional
+    public void accept(String token, Long wardUserId) {
+        if (wardUserId == null) {
+            throw new CustomException(ErrorCode.AUTH_TOKEN_INVALID, "로그인이 필요합니다."); // 401
+        }
+
+        String key = "invite:" + token;
+        String payload = redisTemplate.opsForValue().get(key);
+        if (payload == null) {
+            throw new CustomException(ErrorCode.EMAIL_CODE_EXPIRED, "토큰이 유효하지 않거나 만료되었습니다."); // 400
+        }
+
+        long guardianUserId = extractGuardianUserId(payload);
+        String invitedWardEmail = extractWardEmail(payload);
+        String invitedWardName  = extractWardName(payload);
+
+        User ward = userRepository.findById(wardUserId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND, "피보호자 정보를 찾을 수 없습니다."));
+        User guardian = userRepository.findById(guardianUserId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND, "보호자 정보를 찾을 수 없습니다."));
+
+        if (invitedWardEmail != null && ward.getEmail() != null) {
+            if (!ward.getEmail().trim().equalsIgnoreCase(invitedWardEmail.trim())) {
+                throw new CustomException(ErrorCode.INVALID_INPUT, "초대가 발송된 이메일 계정으로 로그인해 주세요.");
+            }
+        }
+
+        if (invitedWardName != null && ward.getUsername() != null) {
+            if (!normalizeName(ward.getUsername()).equals(normalizeName(invitedWardName))) {
+                throw new CustomException(ErrorCode.INVALID_INPUT, "초대된 이름과 계정의 이름이 일치하지 않습니다.");
+            }
+        }
+
+        try {
+            if (!userGuardianLinkRepository.existsByUserIdAndGuardianId(ward.getId(), guardian.getId())) {
+                userGuardianLinkRepository.save(UserGuardianLinkEntity.builder()
+                        .user(ward)
+                        .guardian(guardian)
+                        .createdAt(LocalDateTime.now())
+                        .build());
+            }
+        } catch (DataIntegrityViolationException e) {
+            log.info("link already exists (race tolerated): user={}, guardian={}", ward.getId(), guardian.getId());
+        }
+
+        org.springframework.transaction.support.TransactionSynchronizationManager
+                .registerSynchronization(new org.springframework.transaction.support.TransactionSynchronization() {
+                    @Override public void afterCommit() { redisTemplate.delete(key); }
+                });
+
+        log.info("[INVITE_ACCEPT] success (guardian->ward) wardId={} guardianId={}", ward.getId(), guardian.getId());
+    }
+
+    // 문자열 좌표 안전 파싱
+    private Double parseDoubleSafe(String s) {
+        try {
+            if (s == null || s.isBlank()) return null;
+            return Double.parseDouble(s.trim());
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    // 하버사인: WGS84 기준 거리(m)
+    private double distanceMeters(double lat1, double lon1, double lat2, double lon2) {
+        final double R = 6371000.0; // 지구 반경(m)
+        double dLat = Math.toRadians(lat2 - lat1);
+        double dLon = Math.toRadians(lon2 - lon1);
+        double a = Math.sin(dLat/2) * Math.sin(dLat/2)
+                + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
+                * Math.sin(dLon/2) * Math.sin(dLon/2);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        return R * c;
+    }
+
+    private long extractGuardianUserId(String payload) {
+        try {
+            JsonNode root = objectMapper.readTree(payload);
+            JsonNode n = root.get("guardianUserId");
+            if (n != null && n.canConvertToLong()) {
+                return n.asLong();
+            }
+        } catch (Exception ignore) {}
+        throw new CustomException(ErrorCode.INVALID_INPUT, "토큰에 보호자 정보가 올바르지 않습니다.");
+    }
+
+    private String extractWardEmail(String payload) {
+        try {
+            JsonNode root = objectMapper.readTree(payload);
+            JsonNode n = root.get("wardEmail");
+            if (n != null && !n.isNull()) return n.asText();
+        } catch (Exception ignore) {}
+        return null;
+    }
+
+    private String extractWardName(String payload) {
+        try {
+            JsonNode root = objectMapper.readTree(payload);
+            JsonNode n = root.get("wardName");
+            if (n != null && !n.isNull()) return n.asText();
+        } catch (Exception ignore) {}
+        return null;
+    }
+
+    private String normalizeName(String s) {
+        if (s == null) return null;
+        String nfkc = Normalizer.normalize(s, Normalizer.Form.NFKC);
+        return nfkc.replaceAll("\\s+", "").toLowerCase(Locale.ROOT);
+    }
+}
