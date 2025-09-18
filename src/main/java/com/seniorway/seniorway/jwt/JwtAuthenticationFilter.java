@@ -30,8 +30,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             "/api-docs",
             "/swagger-resources",
             "/webjars",
+            "/favicon.ico",
+            "/.well-known/appspecific",
             "/api/auth/signup",
-            "/api/auth/guardian-signup"
+            "/api/auth/guardian-signup",
+            "/api/oauth/kakao/callback"
+
     );
 
     // JWT 토큰 생성, 검증, 인증정보 추출을 담당하는 프로바이더
