@@ -7,10 +7,12 @@ import com.seniorway.seniorway.entity.user.User;
 import com.seniorway.seniorway.entity.user.UserGuardianLinkEntity;
 import com.seniorway.seniorway.enums.error.ErrorCode;
 import com.seniorway.seniorway.event.location.LocationSavedEvent;
+import com.seniorway.seniorway.event.location.LocationUpdatedEvent;
 import com.seniorway.seniorway.exception.CustomException;
 import com.seniorway.seniorway.repository.location.UserLocationRepository;
 import com.seniorway.seniorway.repository.user.UserGuardianLinkRepository;
 import com.seniorway.seniorway.security.CustomUserDetails;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -38,6 +40,7 @@ public class LocationServiceImpl implements LocationService {
         sendLocationToGuardian(msg);
     }
 
+    @Transactional
     public void saveLocation(LocationMessage msg) {
         // 1) 최신 위치 저장 (Hash)
         String key = "location: " + msg.getUserId();
@@ -60,6 +63,8 @@ public class LocationServiceImpl implements LocationService {
                 .build();
 
         userLocationRepository.save(userLocation);
+
+        applicationEventPublisher.publishEvent(new LocationUpdatedEvent(msg.getUserId()));
     }
 
     private void sendLocationToGuardian(LocationMessage msg) {
