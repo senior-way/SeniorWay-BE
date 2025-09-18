@@ -39,4 +39,9 @@ public class UserGuardianLinkServiceImpl implements UserGuardianLinkService {
 
         userGuardianLinkRepository.save(link);
     }
+
+    @Override
+    public boolean hasWard(Long guardianId){
+        return userGuardianLinkRepository.existsByGuardianId(guardianId);
+    }
 }

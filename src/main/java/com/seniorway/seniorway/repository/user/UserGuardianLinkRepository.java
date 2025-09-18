@@ -20,6 +20,9 @@ public interface UserGuardianLinkRepository extends JpaRepository<UserGuardianLi
     // 특정 피보호자-보호자 관계 존재 여부
     boolean existsByUserIdAndGuardianId(Long userId, Long guardianId);
 
+    // 보호자 id로 피보호자 여부 확인
+    boolean existsByGuardianId(Long guardianId);
+
     Optional<UserGuardianLinkEntity> findByUserIdAndGuardianId(Long userId, Long guardianId);
 
     // 관계 삭제
