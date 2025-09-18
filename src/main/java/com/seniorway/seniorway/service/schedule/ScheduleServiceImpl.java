@@ -372,16 +372,11 @@ public class ScheduleServiceImpl implements ScheduleService {
                         .toList();
 
                     String photoUrl = null;
-                    if (day1Spots.size() >= 2) {
-                        String img2 = day1Spots.get(1).getTouristSpot().getFirstimage();
-                        if (img2 != null && !img2.isBlank()) {
-                            photoUrl = img2;
-                        }
-                    }
-                    if (photoUrl == null && day1Spots.size() >= 3) {
-                        String img3 = day1Spots.get(2).getTouristSpot().getFirstimage();
-                        if (img3 != null && !img3.isBlank()) {
-                            photoUrl = img3;
+                    for (ScheduleTouristSpotEntity spot : day1Spots) {
+                        String img = spot.getTouristSpot().getFirstimage();
+                        if (img != null && !img.isBlank()) {
+                            photoUrl = img;
+                            break; // 첫 번째로 이미지가 있는 spot을 사용
                         }
                     }
                     if (photoUrl != null) {
