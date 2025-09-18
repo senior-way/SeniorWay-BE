@@ -1,6 +1,7 @@
 spring:
   application:
     name: seniorway
+    deploy: ${deploy.status}
 
   config:
     import: optional:application-secret.yml
