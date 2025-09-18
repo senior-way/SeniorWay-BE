@@ -5,11 +5,13 @@ import com.seniorway.seniorway.dto.oauth.KakaoTokenResponse;
 import com.seniorway.seniorway.dto.oauth.KakaoUserInfoConverter;
 import com.seniorway.seniorway.dto.oauth.KakaoUserInfoResponse;
 import com.seniorway.seniorway.entity.user.User;
+import com.seniorway.seniorway.enums.user.Role;
 import com.seniorway.seniorway.jwt.JwtTokenProvider;
 import com.seniorway.seniorway.repository.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -17,11 +19,14 @@ import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
+import java.util.Optional;
+
 @Service
 @RequiredArgsConstructor
 public class KakaoLoginService {
     private final UserRepository userRepository;
     private final JwtTokenProvider jwtTokenProvider;
+    private final PasswordEncoder passwordEncoder;
 
     // application.yml에 설정된 값들을 주입받음
     @Value("${spring.security.oauth2.client.registration.kakao.client-id}")
@@ -93,12 +98,26 @@ public class KakaoLoginService {
     }
 
     private User saveOrUpdateUser(KakaoUserInfoResponse kakaoUserInfoResponse) {
-        User user = userRepository.findByKakaoId(kakaoUserInfoResponse.getId())
-                .map(entity -> entity.update(
-                        kakaoUserInfoResponse.getProperties().getNickname(),
-                        kakaoUserInfoResponse.getKakaoAccount().getProfile().getProfileImageUrl()))
-                .orElseGet(() -> KakaoUserInfoConverter.toEntity(kakaoUserInfoResponse));
+        Long kakaoId = kakaoUserInfoResponse.getId();
+        String nickname = kakaoUserInfoResponse.getProperties().getNickname();
+        String pictureUrl = Optional.ofNullable(kakaoUserInfoResponse.getKakaoAccount())
+                .map(KakaoUserInfoResponse.KakaoAccount::getProfile)
+                .map(KakaoUserInfoResponse.KakaoAccount.Profile::getProfileImageUrl)
+                .orElse(null);
 
-        return userRepository.save(user);
+
+        return userRepository.findByKakaoId(kakaoId)
+                .map(user -> {
+                    // 기존 사용자 정보 갱신
+                    user.setUsername(nickname);
+                    user.setPicture(pictureUrl);
+                    return userRepository.save(user);
+                })
+                .orElseGet(() -> {
+                    // 신규 사용자 생성
+                    User newUser = KakaoUserInfoConverter.toEntity(kakaoUserInfoResponse, passwordEncoder);
+                    newUser.setRole(Role.USER); // 기본 권한 설정
+                    return userRepository.save(newUser);
+                });
     }
 }
