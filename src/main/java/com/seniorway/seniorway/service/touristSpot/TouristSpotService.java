@@ -7,14 +7,9 @@ import com.seniorway.seniorway.entity.touristSpotDetail.LeisureSportsDetailEntit
 import com.seniorway.seniorway.entity.touristSpotDetail.PerformanceExhibitionDetailEntity;
 import com.seniorway.seniorway.entity.touristSpotDetail.ShoppingDetailEntity;
 import com.seniorway.seniorway.entity.touristSpotDetail.TouristAttractionDetailEntity;
+import com.seniorway.seniorway.entity.touristSpotDetail.FestivalDetailEntity;
 import com.seniorway.seniorway.repository.touristSpot.TouristSpotRepository;
-import com.seniorway.seniorway.repository.touristSpotDetail.FoodDetailRepository;
-import com.seniorway.seniorway.repository.touristSpotDetail.LeisureSportsDetailRepository;
-import com.seniorway.seniorway.repository.touristSpotDetail.PerformanceExhibitionDetailRepository;
-import com.seniorway.seniorway.repository.touristSpotDetail.ShoppingDetailRepository;
-import com.seniorway.seniorway.repository.touristSpotDetail.TouristAttractionDetailRepository;
-import com.seniorway.seniorway.repository.touristSpotDetail.WheelchairAccessRepository;
-import com.seniorway.seniorway.repository.touristSpotDetail.PetFriendlyInfoRepository;
+import com.seniorway.seniorway.repository.touristSpotDetail.*;
 import com.seniorway.seniorway.entity.touristSpotDetail.WheelchairAccessEntity;
 import com.seniorway.seniorway.entity.touristSpotDetail.PetFriendlyEntity;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +27,13 @@ import java.nio.charset.StandardCharsets;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
+
 @Service
 @RequiredArgsConstructor
 public class TouristSpotService {
@@ -44,6 +46,7 @@ public class TouristSpotService {
     private final TouristAttractionDetailRepository touristAttractionDetailRepository;
     private final WheelchairAccessRepository wheelchairAccessRepository;
     private final PetFriendlyInfoRepository petFriendlyInfoRepository;
+    private final FestivalDetailRepository festivalDetailRepository;
     private final Logger logger = LoggerFactory.getLogger(TouristSpotService.class);
 
     @Value("${KTO.KTO_TOUR_INFO_API_KEY}")
@@ -271,7 +274,7 @@ public class TouristSpotService {
                         logger.debug("[TouristSpotService] 상세 API 응답 수신 성공: contentId={}, contentTypeId={}", contentId, contentTypeId);
                     } else {
                         logger.error("[TouristSpotService] 상세 API 호출 실패: HTTP {}", responseCode);
-                        throw new RuntimeException("상세 API 호출 실패: HTTP " + responseCode);
+                        throw new RuntimeException("상��� API 호출 실패: HTTP " + responseCode);
                     }
                 } finally {
                     if (br != null) try { br.close(); } catch (Exception ignore) {}
@@ -635,6 +638,112 @@ public class TouristSpotService {
         logger.info("[TouristSpotService] 반려동물 여행정보 저장 완료. 저장 건수: {}", savedCount);
     }
 
+    // lclsSystm2 값이 EV01인 관광지에 대해 축제 상세 저장
+    public void fetchAndSaveFestivalDetailsForEV01() {
+        var spots = touristSpotRepository.findAll().stream()
+                .filter(spot -> "EV01".equals(spot.getLclsSystm2()))
+                .toList();
+        logger.info("[TouristSpotService] lclsSystm2=EV01 관광지 축제 상세 저장 시작. 대상 수: {}", spots.size());
+        int savedCount = 0;
+        for (TouristSpotEntity spot : spots) {
+            String contentId = spot.getContentId();
+            String contentTypeId = spot.getContentTypeId();
+            if (festivalDetailRepository.existsByContentId(contentId)) {
+                logger.info("[TouristSpotService] 이미 축제 상세정보가 저장된 contentId={}", contentId);
+                continue;
+            }
+            try {
+                String encodedApiKey = URLEncoder.encode(apiKey, StandardCharsets.UTF_8);
+                String urlStr = "https://apis.data.go.kr/B551011/KorService2/detailIntro2"
+                        + "?serviceKey=" + encodedApiKey
+                        + "&MobileOS=WEB"
+                        + "&MobileApp=SeniorWay"
+                        + "&contentId=" + contentId
+                        + "&contentTypeId=" + contentTypeId
+                        + "&_type=json";
+                logger.info("[TouristSpotService] 축제 상세 API 호출: {}", urlStr);
+
+                BufferedReader br = null;
+                StringBuilder result = new StringBuilder();
+                java.net.HttpURLConnection conn = null;
+                try {
+                    URL url = new URL(urlStr);
+                    conn = (java.net.HttpURLConnection) url.openConnection();
+                    conn.setRequestMethod("GET");
+                    conn.setConnectTimeout(10000);
+                    conn.setReadTimeout(10000);
+                    int responseCode = conn.getResponseCode();
+                    if (responseCode == java.net.HttpURLConnection.HTTP_OK) {
+                        br = new BufferedReader(new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8));
+                        String line;
+                        while ((line = br.readLine()) != null) {
+                            result.append(line);
+                        }
+                        logger.debug("[TouristSpotService] 축제 상세 API 응답 수신 성공: contentId={}", contentId);
+                    } else {
+                        logger.error("[TouristSpotService] 축제 상세 API 호출 실패: HTTP {}", responseCode);
+                        continue;
+                    }
+                } finally {
+                    if (br != null) try { br.close(); } catch (Exception ignore) {}
+                    if (conn != null) conn.disconnect();
+                }
+
+                String response = result.toString();
+                JSONObject json = new JSONObject(response);
+                JSONObject body = json.optJSONObject("response") != null ? json.getJSONObject("response").optJSONObject("body") : null;
+                if (body == null || !body.has("items")) {
+                    logger.warn("[TouristSpotService] 축제 상세 응답에 body/items 없음: contentId={}", contentId);
+                    continue;
+                }
+                JSONObject items = body.getJSONObject("items");
+                if (!items.has("item")) {
+                    logger.warn("[TouristSpotService] 축제 상세 응답에 item 없음: contentId={}", contentId);
+                    continue;
+                }
+                JSONObject item;
+                if (items.optJSONArray("item") != null) {
+                    item = items.getJSONArray("item").getJSONObject(0);
+                } else {
+                    item = items.getJSONObject("item");
+                }
+                if (item == null) continue;
+
+                FestivalDetailEntity entity = FestivalDetailEntity.builder()
+                        .contentId(contentId)
+                        .contentTypeId(contentTypeId)
+                        .touristSpot(spot)
+                        .sponsor1(item.optString("sponsor1", null))
+                        .sponsor1Tel(item.optString("sponsor1tel", null))
+                        .sponsor2(item.optString("sponsor2", null))
+                        .sponsor2Tel(item.optString("sponsor2tel", null))
+                        .eventStartDate(item.optString("eventstartdate", null))
+                        .eventEndDate(item.optString("eventenddate", null))
+                        .playTime(item.optString("playtime", null))
+                        .eventPlace(item.optString("eventplace", null))
+                        .eventHomepage(item.optString("eventhomepage", null))
+                        .ageLimit(item.optString("agelimit", null))
+                        .bookingPlace(item.optString("bookingplace", null))
+                        .placeInfo(item.optString("placeinfo", null))
+                        .subEvent(item.optString("subevent", null))
+                        .program(item.optString("program", null))
+                        .useTimeFestival(item.optString("usetimefestival", null))
+                        .discountInfoFestival(item.optString("discountinfofestival", null))
+                        .spendTimeFestival(item.optString("spendtimefestival", null))
+                        .festivalGrade(item.optString("festivalgrade", null))
+                        .progressType(item.optString("progresstype", null))
+                        .festivalType(item.optString("festivaltype", null))
+                        .build();
+                festivalDetailRepository.save(entity);
+                savedCount++;
+                logger.info("[TouristSpotService] 축제 상세정보 저장 완료: contentId={}", contentId);
+            } catch (Exception e) {
+                logger.error("[TouristSpotService] 축제 상세정보 저장 실패: contentId={}, error={}", contentId, e.getMessage(), e);
+            }
+        }
+        logger.info("[TouristSpotService] lclsSystm2=EV01 관광지 축제 상세 저장 완료. 저장 건수: {}", savedCount);
+    }
+
     public TouristSpotEntity findTouristSpotByContentId(String contentId) {
         return touristSpotRepository.findByContentId(contentId);
     }
@@ -717,5 +826,85 @@ public class TouristSpotService {
                 .toList();
         // 해당 contentId에 해당하는 TouristSpotEntity 목록 반환
         return touristSpotRepository.findAllByContentIdIn(barrierFreeIds);
+    }
+
+    /**
+     * 현재 날짜 기준 시작일이 가장 빠른 축제 5개 반환
+     */
+    public List<FestivalDetailEntity> getUpcomingFestivalsTop5() {
+        LocalDate today = LocalDate.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
+
+        return festivalDetailRepository.findAll().stream()
+                .filter(festival -> {
+                    try {
+                        LocalDate start = LocalDate.parse(festival.getEventStartDate(), formatter);
+                        return start != null && !start.isBefore(today);
+                    } catch (Exception e) {
+                        return false;
+                    }
+                })
+                .sorted(Comparator.comparing(f -> {
+                    try {
+                        return LocalDate.parse(f.getEventStartDate(), formatter);
+                    } catch (Exception e) {
+                        return LocalDate.MAX;
+                    }
+                }))
+                .limit(5)
+                .toList();
+    }
+
+    /**
+     * 현재 날짜 기준 시작일이 가장 빠른 축제 5개를 상세 구조로 반환
+     */
+    public List<Map<String, Object>> getUpcomingFestivalDetailDtosTop5() {
+        LocalDate today = LocalDate.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
+
+        return festivalDetailRepository.findAll().stream()
+                .filter(festival -> {
+                    try {
+                        LocalDate start = LocalDate.parse(festival.getEventStartDate(), formatter);
+                        return start != null && !start.isBefore(today);
+                    } catch (Exception e) {
+                        return false;
+                    }
+                })
+                .sorted(Comparator.comparing(f -> {
+                    try {
+                        return LocalDate.parse(f.getEventStartDate(), formatter);
+                    } catch (Exception e) {
+                        return LocalDate.MAX;
+                    }
+                }))
+                .limit(5)
+                .map(festival -> {
+                    Map<String, Object> result = new HashMap<>();
+                    TouristSpotEntity spot = festival.getTouristSpot();
+                    result.put("spot", spot);
+
+                    // detail: FestivalDetailEntity에서 touristSpot 필드 제외
+                    JSONObject detailJson = new JSONObject(festival);
+                    detailJson.remove("touristSpot");
+                    result.put("detail", detailJson.toMap());
+
+                    // wheelchairAccess
+                    WheelchairAccessEntity wheelchair = wheelchairAccessRepository.findByContentId(festival.getContentId());
+                    if (wheelchair != null && Boolean.TRUE.equals(wheelchair.getBarrierFree())) {
+                        result.put("wheelchairAccess", wheelchair);
+                    }
+
+                    // petFriendly
+                    PetFriendlyEntity pet = petFriendlyInfoRepository.existsByContentId(festival.getContentId())
+                            ? petFriendlyInfoRepository.findByContentId(festival.getContentId())
+                            : null;
+                    if (pet != null) {
+                        result.put("petFriendly", pet);
+                    }
+
+                    return result;
+                })
+                .toList();
     }
 }
