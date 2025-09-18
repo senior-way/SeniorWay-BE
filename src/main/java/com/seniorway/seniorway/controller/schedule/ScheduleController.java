@@ -68,6 +68,13 @@ public class ScheduleController {
         return ResponseEntity.ok(scheduleService.getScheduleList(userEmail));
     }
 
+    // 피보호자 이메일로 일정 목록 조회 API 추가
+    @GetMapping("/list-by-email")
+    public ResponseEntity<?> getScheduleListByProtegeEmail(
+            @RequestParam("protegeEmail") String protegeEmail) {
+        return ResponseEntity.ok(scheduleService.getScheduleList(protegeEmail));
+    }
+
     // 일정 삭제 API 추가
     @DeleteMapping("/{scheduleId}")
     public ResponseEntity<?> deleteSchedule(
