@@ -52,6 +52,16 @@ public class TouristSpotController {
         }
     }
 
+    @PostMapping("/update-festival-detail-ev01")
+    public ResponseEntity<?> updateFestivalDetailsForEV01() {
+        try {
+            touristSpotService.fetchAndSaveFestivalDetailsForEV01();
+            return ResponseEntity.ok("lclsSystm2=EV01 관광지의 축제 상세정보가 성공적으로 저장되었습니다.");
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("축제 상세정보 저장 중 오류 발생");
+        }
+    }
+
     @GetMapping("/detail/{contentId}")
     public ResponseEntity<?> getTouristSpotDetail(@PathVariable String contentId) {
         try {
@@ -84,6 +94,16 @@ public class TouristSpotController {
             return ResponseEntity.ok(result);
         } catch (Exception e) {
             return ResponseEntity.status(500).body("무장애(barrier free) 관광지 조회 중 오류 발생");
+        }
+    }
+
+    @GetMapping("/upcoming-festivals")
+    public ResponseEntity<?> getUpcomingFestivalsTop5() {
+        try {
+            var festivalDtos = touristSpotService.getUpcomingFestivalDetailDtosTop5();
+            return ResponseEntity.ok(festivalDtos);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("다가오는 축제 조회 중 오류 발생");
         }
     }
 }
