@@ -197,7 +197,7 @@ public class AlarmServiceImpl implements AlarmService {
         }
 
         String encodedToken = URLEncoder.encode(token, StandardCharsets.UTF_8);
-        String acceptUrl = "%s/invite/accept?token=%s".formatted(frontendBaseUrl, encodedToken);
+        String acceptUrl = "%s/v2/guardian/invite/accept?token=%s".formatted(frontendBaseUrl, encodedToken);
 
         String greetingName = (wardName != null && !wardName.isBlank()) ? wardName.trim() : null;
 
