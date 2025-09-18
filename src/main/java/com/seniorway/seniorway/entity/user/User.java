@@ -31,7 +31,7 @@ public class User {
     @Column(nullable = false)
     private String password;  // 일반 로그인은 암호화, Kakao는 "kakao" 같은 더미 문자열
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private LocalDate birth;
 
     // 프로필 사진 URL
