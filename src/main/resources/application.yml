@@ -87,4 +87,4 @@ KTO:
 
 app:
   frontend:
-    base-url: "http://localhost:5173/api"
+    base-url: "http://localhost:5173"

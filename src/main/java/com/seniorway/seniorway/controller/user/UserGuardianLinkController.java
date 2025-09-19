@@ -31,4 +31,11 @@ public class UserGuardianLinkController {
         boolean hasWard = userGuardianLinkService.hasWard(guardianId);
         return ResponseEntity.ok(hasWard);
     }
+
+    @GetMapping("/get-ward-email")
+    public ResponseEntity<String> getWardEmail(@AuthenticationPrincipal CustomUserDetails userDetails) {
+        Long guardianId = userDetails.getUserId();
+        String wardEmail = userGuardianLinkService.getWardEmail(guardianId);
+        return ResponseEntity.ok(wardEmail);
+    }
 }
