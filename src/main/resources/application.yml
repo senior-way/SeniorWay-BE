@@ -70,9 +70,9 @@ server:
   address: 0.0.0.0
 
 jwt:
-  secret: 123456789abcdefghijklmnopqrstuvwxyz #${JWT_CODE}
-  expiration: 86400000  # 24시간
-  refreshExpiration: 604800000  # 7일
+  secret: ${jwt.secret}
+  expiration: ${jwt.expiration}
+  refreshExpiration: ${jwt.refreshExpiration}
 
 springdoc:
   api-docs:
