@@ -38,7 +38,7 @@ jobs:
         run: |
           mkdir -p ./src/main/resources
           cd ./src/main/resources
-          printf "%s" "${{ secrets.YML }}" > application-secret.yml
+          printf "%s" "${{ secrets.YML }}" > application.yml
 
       # 5. Gradle build
       - name: Build with Gradle
