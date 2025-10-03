@@ -9,6 +9,8 @@ import com.seniorway.seniorway.repository.user.UserGuardianLinkRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
+
 @Service
 @RequiredArgsConstructor
 public class UserGuardianLinkServiceImpl implements UserGuardianLinkService {
@@ -43,5 +45,10 @@ public class UserGuardianLinkServiceImpl implements UserGuardianLinkService {
     @Override
     public boolean hasWard(Long guardianId){
         return userGuardianLinkRepository.existsByGuardianId(guardianId);
+    }
+
+    @Override
+    public String getWardEmail(Long guardianId){
+        return userGuardianLinkRepository.findWardEmailByGuardianId(guardianId);
     }
 }

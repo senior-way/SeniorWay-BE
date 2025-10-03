@@ -25,6 +25,13 @@ public interface UserGuardianLinkRepository extends JpaRepository<UserGuardianLi
 
     Optional<UserGuardianLinkEntity> findByUserIdAndGuardianId(Long userId, Long guardianId);
 
+    // 보호자 id로 피보호자 이메일 찾기
+    @Query("select u.email " +
+            "from UserGuardianLinkEntity l " +
+            "join l.user u " +
+            "where l.guardian.id = :guardianId")
+    String findWardEmailByGuardianId(@Param("guardianId") Long guardianId);
+
     // 관계 삭제
     @Modifying
     @Transactional
