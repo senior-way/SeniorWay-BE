@@ -1,11 +1,8 @@
-name: CI/CD using github actions & docker
+name: CI/CD using GitHub Actions & Docker
 
 on:
   push:
     branches: [ "main", "dev" ]
-
-permissions:
-  contents: read
 
 jobs:
   CI-CD:
@@ -22,38 +19,19 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      # 3. Gradle cache (옵션)
-      - name: Gradle Caching
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
-
-      # 4. 기존 application-secret.yml 삭제 후 새로 생성
-      - name: recreate application-secret.yml
+      # 3. application-secret.yml 생성
+      - name: Create application-secret.yml
         run: |
-          rm -f ./src/main/resources/application-secret.yml
           mkdir -p ./src/main/resources
           printf "%s\n" "${{ secrets.YML }}" > ./src/main/resources/application-secret.yml
 
-      # 5. Debug: 파일 내용 확인 (Secrets는 로그에서 ***로 나옴)
-      - name: Debug application-secret.yml
-        run: |
-          echo "Debug: application-secret.yml created"
-          ls -l ./src/main/resources/
-          cat ./src/main/resources/application-secret.yml | head -n 5
-
-      # 6. Gradle build
+      # 4. Gradle build
       - name: Build with Gradle
         run: |
           chmod +x ./gradlew
           ./gradlew clean build -x test
 
-      # 7. Docker build & push (main 브랜치만)
+      # 5. Docker build & push (main 브랜치만)
       - name: Docker build & push to prod
         if: github.ref == 'refs/heads/main'
         run: |
@@ -61,7 +39,7 @@ jobs:
           docker build -f Dockerfile -t ${{ secrets.DOCKER_USERNAME }}/senior-way:latest .
           docker push ${{ secrets.DOCKER_USERNAME }}/senior-way:latest
 
-      # 8. Deploy to EC2 (prod)
+      # 6. Deploy to EC2 (prod)
       - name: Deploy to prod
         if: github.ref == 'refs/heads/main'
         uses: appleboy/ssh-action@master
@@ -78,8 +56,3 @@ jobs:
             sudo docker pull ${{ secrets.DOCKER_USERNAME }}/senior-way:latest
             sudo docker run -d -p 8080:8080 --name seniorway ${{ secrets.DOCKER_USERNAME }}/senior-way:latest
             sudo docker image prune -f
-
-      # 9. Dev branch는 배포 안 함
-      - name: Skip deploy for dev
-        if: github.ref == 'refs/heads/dev'
-        run: echo "Dev branch build completed. No deploy executed."
