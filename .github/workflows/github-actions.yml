@@ -43,7 +43,12 @@ jobs:
           rm -f ./src/main/resources/application-secret.yml
           printf "%s" "${{ secrets.YML }}" > ./src/main/resources/application-secret.yml
 
-      # 5. Gradle build
+      # 4-1. Kakao redirect-uri 확인
+      - name: Print Kakao redirect-uri
+        run: |
+          echo "Kakao redirect-uri: $(grep 'redirect-uri' ./src/main/resources/application-secret.yml | awk '{print $2}')"
+
+        # 5. Gradle build
       - name: Build with Gradle
         run: |
           chmod +x ./gradlew
