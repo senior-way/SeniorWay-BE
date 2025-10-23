@@ -1,11 +1,8 @@
-name: CI/CD using GitHub Actions & Docker
+name: CI/CD using github actions & docker
 
 on:
   push:
     branches: [ "main", "dev" ]
-  pull_request:
-    branches: [ "main", "dev" ]
-  workflow_dispatch:  # 수동 실행 가능
 
 permissions:
   contents: read
@@ -25,7 +22,7 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      # 3. Gradle cache
+      # 3. Gradle cache (옵션)
       - name: Gradle Caching
         uses: actions/cache@v3
         with:
@@ -36,25 +33,27 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
 
-      # 4. application-secret.yml 생성 (Secrets에서 가져오기)
-      - name: make application-secret.yml
+      # 4. 기존 application-secret.yml 삭제 후 새로 생성
+      - name: recreate application-secret.yml
         run: |
-          mkdir -p ./src/main/resources
           rm -f ./src/main/resources/application-secret.yml
-          printf "%s" "${{ secrets.YML }}" > ./src/main/resources/application-secret.yml
+          mkdir -p ./src/main/resources
+          printf "%s\n" "${{ secrets.YML }}" > ./src/main/resources/application-secret.yml
 
-      # 4-1. Kakao redirect-uri 확인
-      - name: Print Kakao redirect-uri
+      # 5. Debug: 파일 내용 확인 (Secrets는 로그에서 ***로 나옴)
+      - name: Debug application-secret.yml
         run: |
-          echo "Kakao redirect-uri: $(grep 'redirect-uri' ./src/main/resources/application-secret.yml | awk '{print $2}')"
+          echo "Debug: application-secret.yml created"
+          ls -l ./src/main/resources/
+          cat ./src/main/resources/application-secret.yml | head -n 5
 
-        # 5. Gradle build
+      # 6. Gradle build
       - name: Build with Gradle
         run: |
           chmod +x ./gradlew
           ./gradlew clean build -x test
 
-      # 6. Docker build & push (main 브랜치만)
+      # 7. Docker build & push (main 브랜치만)
       - name: Docker build & push to prod
         if: github.ref == 'refs/heads/main'
         run: |
@@ -62,7 +61,7 @@ jobs:
           docker build -f Dockerfile -t ${{ secrets.DOCKER_USERNAME }}/senior-way:latest .
           docker push ${{ secrets.DOCKER_USERNAME }}/senior-way:latest
 
-      # 7. Deploy to EC2 (prod)
+      # 8. Deploy to EC2 (prod)
       - name: Deploy to prod
         if: github.ref == 'refs/heads/main'
         uses: appleboy/ssh-action@master
@@ -71,21 +70,16 @@ jobs:
           username: ubuntu
           key: ${{ secrets.PRIVATE_KEY }}
           script: |
-            # 기존 컨테이너 중지 및 삭제
             CONTAINER_ID=$(sudo docker ps -q --filter "ancestor=${{ secrets.DOCKER_USERNAME }}/senior-way:latest")
             if [ ! -z "$CONTAINER_ID" ]; then
               sudo docker stop $CONTAINER_ID
               sudo docker rm $CONTAINER_ID
             fi
-
-            # 최신 이미지 pull & 실행
             sudo docker pull ${{ secrets.DOCKER_USERNAME }}/senior-way:latest
             sudo docker run -d -p 8080:8080 --name seniorway ${{ secrets.DOCKER_USERNAME }}/senior-way:latest
-
-            # 사용하지 않는 이미지 정리
             sudo docker image prune -f
 
-      # 8. Dev 서버는 배포 안 함
+      # 9. Dev branch는 배포 안 함
       - name: Skip deploy for dev
         if: github.ref == 'refs/heads/dev'
         run: echo "Dev branch build completed. No deploy executed."
