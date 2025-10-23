@@ -1,8 +1,11 @@
-name: CI/CD using github actions & docker
+name: CI/CD using GitHub Actions & Docker
 
 on:
   push:
     branches: [ "main", "dev" ]
+  pull_request:
+    branches: [ "main", "dev" ]
+  workflow_dispatch:  # 수동 실행 가능
 
 permissions:
   contents: read
@@ -37,8 +40,8 @@ jobs:
       - name: make application-secret.yml
         run: |
           mkdir -p ./src/main/resources
-          cd ./src/main/resources
-          printf "%s" "${{ secrets.YML }}" > application-secret.yml
+          rm -f ./src/main/resources/application-secret.yml
+          printf "%s" "${{ secrets.YML }}" > ./src/main/resources/application-secret.yml
 
       # 5. Gradle build
       - name: Build with Gradle
@@ -48,7 +51,7 @@ jobs:
 
       # 6. Docker build & push (main 브랜치만)
       - name: Docker build & push to prod
-        if: contains(github.ref, 'main')
+        if: github.ref == 'refs/heads/main'
         run: |
           docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
           docker build -f Dockerfile -t ${{ secrets.DOCKER_USERNAME }}/senior-way:latest .
@@ -56,8 +59,8 @@ jobs:
 
       # 7. Deploy to EC2 (prod)
       - name: Deploy to prod
+        if: github.ref == 'refs/heads/main'
         uses: appleboy/ssh-action@master
-        if: contains(github.ref, 'main')
         with:
           host: ${{ secrets.HOST_PROD }}
           username: ubuntu
@@ -79,5 +82,5 @@ jobs:
 
       # 8. Dev 서버는 배포 안 함
       - name: Skip deploy for dev
-        if: contains(github.ref, 'dev')
+        if: github.ref == 'refs/heads/dev'
         run: echo "Dev branch build completed. No deploy executed."
