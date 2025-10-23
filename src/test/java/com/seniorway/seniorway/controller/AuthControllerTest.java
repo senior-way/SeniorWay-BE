@@ -42,7 +42,6 @@ class AuthControllerTest {
         signUpDto.setUsername("testuser");
         signUpDto.setPassword("password123");
         signUpDto.setEmail("test@example.com");
-        signUpDto.setRole("USER");
 
         // when
         ResponseEntity<String> response = restTemplate.postForEntity(
