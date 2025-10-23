@@ -23,6 +23,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             "/api/auth/kakao",
             "/api/auth/login",
             "/api/auth/signup",
+            "/api/auth/check-email",
             // Swagger UI
             "/swagger-ui",
             "/swagger-ui.html",
