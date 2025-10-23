@@ -40,13 +40,6 @@ jobs:
           mkdir -p ./src/main/resources
           printf "%s\n" "${{ secrets.YML }}" > ./src/main/resources/application-secret.yml
 
-      # 5. Debug: 파일 내용 확인 (Secrets는 로그에서 ***로 나옴)
-      - name: Debug application-secret.yml
-        run: |
-          echo "Debug: application-secret.yml created"
-          ls -l ./src/main/resources/
-          cat ./src/main/resources/application-secret.yml | head -n 
-
       # 5-1. Debug: Kakao redirect-uri 확인
       - name: Debug Kakao redirect-uri
         run: |
