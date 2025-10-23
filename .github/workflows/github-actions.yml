@@ -41,10 +41,11 @@ jobs:
           printf "%s\n" "${{ secrets.YML }}" > ./src/main/resources/application-secret.yml
 
       # 5-1. Debug: Kakao redirect-uri 확인
-      - name: Debug Secret
+      - name: Show redirect-uri (TEST ONLY)
         run: |
           echo "${{ secrets.YML }}" > temp.yml
-          cat temp.yml
+          grep 'redirect-uri' temp.yml
+
 
 
       # 6. Gradle build
