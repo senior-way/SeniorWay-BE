@@ -18,6 +18,6 @@ class TestRedis implements CommandLineRunner {
 
         // Redis에서 값 읽기
         String value = redisTemplate.opsForValue().get("test-key");
-        System.out.println("Redis에서 읽은 값: " + value);
+        System.out.println("Redis에서 읽은 값2: " + value);
     }
 }
